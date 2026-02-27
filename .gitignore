@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Output files (optional - comment out if you want to track)
+# output_full.txt
+
+# OS
+.DS_Store
+Thumbs.db
