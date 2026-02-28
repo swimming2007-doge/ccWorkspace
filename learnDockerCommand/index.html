@@ -908,13 +908,24 @@
         function selectOption(index) {
             selectedAnswers = [index];
             document.querySelectorAll('.quiz-option').forEach((opt, i) => {
-                opt.classList.toggle('selected', i === index);
+                opt.classList.remove('selected');
+                if (i === index) {
+                    opt.classList.add('selected');
+                }
             });
-            document.querySelector('.quiz-button').disabled = false;
+            const button = document.querySelector('.quiz-button');
+            if (button) {
+                button.disabled = false;
+            }
         }
 
         // 提交答案
         function submitAnswer() {
+            if (selectedAnswers.length === 0) {
+                alert('请先选择一个答案！');
+                return;
+            }
+
             const question = quizQuestions[currentQuizIndex];
             const selected = selectedAnswers[0];
             const options = document.querySelectorAll('.quiz-option');
@@ -930,6 +941,12 @@
 
             if (selected === question.correct) {
                 quizScore++;
+            }
+
+            const button = document.querySelector('.quiz-button');
+            if (button) {
+                button.disabled = true;
+                button.textContent = '下一题...';
             }
 
             setTimeout(() => {
