@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🐳 Docker命令速成</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0db7ed 0%, #384d54 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            gap: 5px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #0db7ed;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #0db7ed, #384d54);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .card-badge.medium {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .card-badge.hard {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .command-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+        }
+
+        .command-box .prompt {
+            color: #4ec9b0;
+        }
+
+        .command-box .command {
+            color: #dcdcaa;
+        }
+
+        .command-box .arg {
+            color: #ce9178;
+        }
+
+        .description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .example {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .tip-box {
+            background: #e3f2fd;
+            border-left: 4px solid #0db7ed;
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 10px;
+        }
+
+        .tip-title {
+            font-weight: 600;
+            color: #0277bd;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .tip-text {
+            color: #0277bd;
+            font-size: 13px;
+        }
+
+        /* Quiz Styles */
+        .quiz-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .quiz-question {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quiz-option.selected {
+            border-color: #0db7ed;
+            background: #e3f2fd;
+        }
+
+        .quiz-option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .quiz-option.wrong {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .quiz-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #0db7ed, #384d54);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .quiz-button:active {
+            transform: scale(0.98);
+        }
+
+        .quiz-result {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .quiz-result h2 {
+            color: #0db7ed;
+            margin-bottom: 10px;
+        }
+
+        .quiz-result .score {
+            font-size: 48px;
+            font-weight: 700;
+            color: #0db7ed;
+            margin: 20px 0;
+        }
+
+        /* Progress Styles */
+        .progress-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0db7ed;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0db7ed, #384d54);
+            transition: width 0.5s;
+        }
+
+        .level-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .level-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .level-icon {
+            width: 36px;
+            height: 36px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .level-icon.completed {
+            background: #4caf50;
+            color: white;
+        }
+
+        .level-icon.current {
+            background: #0db7ed;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .level-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .level-status {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .level-status.completed {
+            color: #4caf50;
+        }
+
+        /* Search Styles */
+        .search-box {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0db7ed;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐳 Docker命令速成</h1>
+            <p style="color: rgba(255,255,255,0.9);">有趣、快速掌握Docker命令</p>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('learn')">📚 学习</button>
+            <button class="nav-tab" onclick="switchTab('quiz')">🎯 测验</button>
+            <button class="nav-tab" onclick="switchTab('progress')">📈 进度</button>
+        </div>
+
+        <!-- 学习区域 -->
+        <div id="learn-section" class="content-section active">
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="search-input" placeholder="搜索Docker命令..." oninput="searchCommands()">
+            </div>
+            <div id="cards-container"></div>
+        </div>
+
+        <!-- 测验区域 -->
+        <div id="quiz-section" class="content-section">
+            <div class="quiz-card" id="quiz-container"></div>
+        </div>
+
+        <!-- 进度区域 -->
+        <div id="progress-section" class="content-section">
+            <div class="progress-section">
+                <div class="progress-header">
+                    <div class="progress-title">学习进度</div>
+                    <div class="progress-percentage" id="progress-percentage">0%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="level-list" id="level-list"></div>
+            </div>
+            <button class="quiz-button" onclick="resetProgress()" style="margin-top: 20px; background: #f44336;">重置进度</button>
+        </div>
+    </div>
+
+    <script>
+        // Docker命令数据
+        const dockerCommands = [
+            {
+                id: 1,
+                level: 'beginner',
+                icon: '🐋',
+                title: 'docker run',
+                difficulty: '简单',
+                command: 'docker run [选项] <镜像名>',
+                description: '这是最常用的命令！用指定镜像启动一个新容器。就像启动一台迷你电脑。',
+                examples: [
+                    'docker run hello-world  // 运行第一个测试镜像',
+                    'docker run -d nginx    // 后台运行nginx',
+                    'docker run -p 8080:80 nginx  // 映射端口8080到容器80'
+                ],
+                tip: '第一次运行某个镜像时，Docker会自动下载它。'
+            },
+            {
+                id: 2,
+                level: 'beginner',
+                icon: '📦',
+                title: 'docker ps',
+                difficulty: '简单',
+                command: 'docker ps [选项]',
+                description: '查看正在运行的容器列表。就像查看运行中的程序任务管理器。',
+                examples: [
+                    'docker ps             // 只显示运行中的容器',
+                    'docker ps -a          // 显示所有容器(包括停止的)',
+                    'docker ps -q          // 只显示容器ID'
+                ],
+                tip: '加上 -a 参数可以看到所有历史容器！'
+            },
+            {
+                id: 3,
+                level: 'beginner',
+                icon: '🛑',
+                title: 'docker stop',
+                difficulty: '简单',
+                command: 'docker stop <容器ID或名称>',
+                description: '优雅地停止一个运行中的容器。就像关机一样。',
+                examples: [
+                    'docker stop abc123    // 使用ID停止',
+                    'docker stop mynginx   // 使用名称停止',
+                    'docker stop $(docker ps -q)  // 停止所有容器'
+                ],
+                tip: '容器停止后可以被重新启动，不会丢失数据。'
+            },
+            {
+                id: 4,
+                level: 'beginner',
+                icon: '🚀',
+                title: 'docker start',
+                difficulty: '简单',
+                command: 'docker start <容器ID或名称>',
+                description: '启动一个已停止的容器。比创建新容器快多了！',
+                examples: [
+                    'docker start abc123   // 启动指定容器',
+                    'docker start mynginx  // 启动名为mynginx的容器'
+                ],
+                tip: '已停止的容器会保留之前的状态和数据。'
+            },
+            {
+                id: 5,
+                level: 'beginner',
+                icon: '🔍',
+                title: 'docker images',
+                difficulty: '简单',
+                command: 'docker images [选项]',
+                description: '查看本地的所有镜像。就像查看你安装的软件列表。',
+                examples: [
+                    'docker images         // 列出所有镜像',
+                    'docker images nginx   // 只显示nginx相关镜像',
+                    'docker images -q      // 只显示镜像ID'
+                ],
+                tip: '镜像可以想象成软件安装包，容器是安装后的软件。'
+            },
+            {
+                id: 6,
+                level: 'beginner',
+                icon: '⬇️',
+                title: 'docker pull',
+                difficulty: '简单',
+                command: 'docker pull <镜像名>',
+                description: '从Docker Hub下载镜像到本地。就像下载软件安装包。',
+                examples: [
+                    'docker pull nginx                    // 下载最新版nginx',
+                    'docker pull nginx:1.21                // 下载指定版本',
+                    'docker pull mysql:5.7                 // 下载MySQL 5.7'
+                ],
+                tip: 'Docker Hub是Docker的"应用商店"，有千万个免费镜像！'
+            },
+            {
+                id: 7,
+                level: 'intermediate',
+                icon: '🗑️',
+                title: 'docker rm',
+                difficulty: '中等',
+                command: 'docker rm [选项] <容器ID或名称>',
+                description: '删除已停止的容器。注意：运行中的容器必须先停止！',
+                examples: [
+                    'docker rm abc123                     // 删除指定容器',
+                    'docker rm -f abc123                  // 强制删除(运行中也可以)',
+                    'docker rm $(docker ps -a -q)         // 删除所有停止的容器'
+                ],
+                tip: '删除容器会清除容器的文件系统，挂载的卷不会受影响。'
+            },
+            {
+                id: 8,
+                level: 'intermediate',
+                icon: '🗃️',
+                title: 'docker rmi',
+                difficulty: '中等',
+                command: 'docker rmi [选项] <镜像ID或名称>',
+                description: '删除本地镜像。必须先删除使用该镜像的容器。',
+                examples: [
+                    'docker rmi nginx:latest              // 删除指定镜像',
+                    'docker rmi $(docker images -q)       // 删除所有镜像',
+                    'docker rmi -f abc123                  // 强制删除'
+                ],
+                tip: '删除镜像可以释放磁盘空间，但需要重新下载才能使用。'
+            },
+            {
+                id: 9,
+                level: 'intermediate',
+                icon: '📊',
+                title: 'docker logs',
+                difficulty: '中等',
+                command: 'docker logs [选项] <容器ID或名称>',
+                description: '查看容器的日志输出。就像查看程序的运行日志。',
+                examples: [
+                    'docker logs mynginx                  // 查看完整日志',
+                    'docker logs -f mynginx               // 实时跟踪日志',
+                    'docker logs --tail 100 mynginx       // 只看最后100行',
+                    'docker logs --since 1h mynginx       // 看1小时内的日志'
+                ],
+                tip: '-f 参数类似于 Linux 的 tail -f，可以实时查看新日志！'
+            },
+            {
+                id: 10,
+                level: 'intermediate',
+                icon: '🖥️',
+                title: 'docker exec',
+                difficulty: '中等',
+                command: 'docker exec [选项] <容器ID或名称> <命令>',
+                description: '在运行中的容器内执行命令。就像远程登录到容器里操作。',
+                examples: [
+                    'docker exec -it mynginx /bin/bash     // 进入容器shell',
+                    'docker exec mynginx ls -la           // 在容器内执行ls命令',
+                    'docker exec mynginx nginx -v         // 查看容器内nginx版本'
+                ],
+                tip: '-it 参数让你获得一个交互式的终端体验。'
+            },
+            {
+                id: 11,
+                level: 'intermediate',
+                icon: '🏗️',
+                title: 'docker build',
+                difficulty: '中等',
+                command: 'docker build [选项] <路径>',
+                description: '根据Dockerfile构建新镜像。就像自己制作软件安装包。',
+                examples: [
+                    'docker build -t myapp .              // 用当前目录的Dockerfile构建',
+                    'docker build -t myapp:v1 .           // 指定版本标签',
+                    'docker build -f Dockerfile.dev .     // 使用指定的Dockerfile'
+                ],
+                tip: 'Dockerfile是镜像的"食谱"，详细描述了如何构建镜像。'
+            },
+            {
+                id: 12,
+                level: 'advanced',
+                icon: '📦',
+                title: 'docker cp',
+                difficulty: '困难',
+                command: 'docker cp <源路径> <目标路径>',
+                description: '在主机和容器之间复制文件。双向都可以！',
+                examples: [
+                    'docker cp ./file.txt mynginx:/tmp/   // 复制文件到容器',
+                    'docker cp mynginx:/tmp/file.txt .    // 从容器复制文件出来',
+                    'docker cp mynginx:/var/log/nginx/ ./logs/  // 复制整个目录'
+                ],
+                tip: '不用进入容器就能轻松传输文件！'
+            },
+            {
+                id: 13,
+                level: 'advanced',
+                icon: '📈',
+                title: 'docker stats',
+                difficulty: '困难',
+                command: 'docker stats [容器ID或名称]',
+                description: '实时查看容器的资源使用情况。CPU、内存、网络一目了然。',
+                examples: [
+                    'docker stats                          // 监控所有容器',
+                    'docker stats mynginx                  // 只监控指定容器',
+                    'docker stats --no-stream mynginx      // 只看一次(不实时)'
+                ],
+                tip: '就像Windows的任务管理器，但专门针对Docker容器！'
+            },
+            {
+                id: 14,
+                level: 'advanced',
+                icon: '🔌',
+                title: 'docker network',
+                difficulty: '困难',
+                command: 'docker network <命令> [选项]',
+                description: '管理Docker网络。让容器之间可以互相通信。',
+                examples: [
+                    'docker network ls                     // 查看网络列表',
+                    'docker network create mynet          // 创建自定义网络',
+                    'docker network connect mynet mynginx // 连接容器到网络'
+                ],
+                tip: '同一网络中的容器可以通过容器名互相访问！'
+            },
+            {
+                id: 15,
+                level: 'advanced',
+                icon: '💾',
+                title: 'docker volume',
+                difficulty: '困难',
+                command: 'docker volume <命令> [选项]',
+                description: '管理数据卷。实现数据持久化，容器删除数据不丢失。',
+                examples: [
+                    'docker volume ls                      // 查看所有卷',
+                    'docker volume create mydata           // 创建数据卷',
+                    'docker run -v mydata:/app/data nginx  // 挂载卷到容器'
+                ],
+                tip: '数据卷是Docker的数据"保险箱"，重要数据一定要用卷！'
+            }
+        ];
+
+        // 测验题目
+        const quizQuestions = [
+            {
+                question: '你想查看正在运行的容器列表，应该使用什么命令？',
+                options: ['docker ls', 'docker ps', 'docker run', 'docker list'],
+                correct: 1
+            },
+            {
+                question: '哪个命令用于优雅地停止一个运行中的容器？',
+                options: ['docker kill', 'docker stop', 'docker exit', 'docker halt'],
+                correct: 1
+            },
+            {
+                question: '如何从Docker Hub下载一个镜像到本地？',
+                options: ['docker get', 'docker download', 'docker pull', 'docker fetch'],
+                correct: 2
+            },
+            {
+                question: '要实时查看容器日志，应该使用哪个参数？',
+                options: ['--tail', '-r', '-f', '--watch'],
+                correct: 2
+            },
+            {
+                question: '进入运行中的容器内部执行命令，使用什么命令？',
+                options: ['docker enter', 'docker exec', 'docker shell', 'docker login'],
+                correct: 1
+            },
+            {
+                question: '构建Docker镜像时，-t参数的作用是什么？',
+                options: ['指定构建超时时间', '给镜像打标签', '显示构建日志', '测试镜像'],
+                correct: 1
+            },
+            {
+                question: 'docker run -p 8080:80 nginx 中，端口的含义是？',
+                options: ['容器80端口映射到主机8080端口', '主机80端口映射到容器8080端口', '两个端口都转发到80', '随机分配端口'],
+                correct: 0
+            },
+            {
+                question: '删除一个已停止的容器，应该使用什么命令？',
+                options: ['docker del', 'docker rm', 'docker delete', 'docker remove'],
+                correct: 1
+            },
+            {
+                question: '要在主机和容器之间复制文件，使用什么命令？',
+                options: ['docker transfer', 'docker copy', 'docker mv', 'docker cp'],
+                correct: 3
+            },
+            {
+                question: 'docker run -d nginx 中的 -d 参数是什么意思？',
+                options: ['调试模式', '删除模式', '后台运行', '下载模式'],
+                correct: 2
+            }
+        ];
+
+        // 状态管理
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+        let selectedAnswers = [];
+        let completedCommands = JSON.parse(localStorage.getItem('completedCommands') || '[]');
+
+        // 初始化
+        function init() {
+            renderCards();
+            updateProgress();
+        }
+
+        // 渲染学习卡片
+        function renderCards(filter = '') {
+            const container = document.getElementById('cards-container');
+            const filteredCommands = dockerCommands.filter(cmd =>
+                cmd.title.toLowerCase().includes(filter.toLowerCase()) ||
+                cmd.description.toLowerCase().includes(filter.toLowerCase()) ||
+                cmd.command.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            container.innerHTML = filteredCommands.map(cmd => `
+                <div class="card fade-in" data-id="${cmd.id}">
+                    <div class="card-header">
+                        <div class="card-icon">${cmd.icon}</div>
+                        <div class="card-title">${cmd.title}</div>
+                        <div class="card-badge ${getDifficultyClass(cmd.difficulty)}">${cmd.difficulty}</div>
+                    </div>
+                    <div class="command-box">
+                        <span class="prompt">$</span> <span class="command">${highlightCommand(cmd.command)}</span>
+                    </div>
+                    <div class="description">${cmd.description}</div>
+                    <div class="example-title">💡 示例：</div>
+                    ${cmd.examples.map(ex => `<div class="example">${ex}</div>`).join('')}
+                    <div class="tip-box">
+                        <div class="tip-title">🎯 小贴士</div>
+                        <div class="tip-text">${cmd.tip}</div>
+                    </div>
+                    <button class="quiz-button" onclick="markComplete(${cmd.id})" style="margin-top: 15px;">
+                        ${completedCommands.includes(cmd.id) ? '✅ 已学习' : '✨ 标记为已学'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function highlightCommand(cmd) {
+            return cmd.replace(/(\[.*?\]|\[.*$)/g, '<span class="arg">$1</span>')
+                      .replace(/(\b[a-z-]+\b)(?=<|\s|$)/g, '<span class="command">$1</span>');
+        }
+
+        function getDifficultyClass(difficulty) {
+            switch(difficulty) {
+                case '简单': return '';
+                case '中等': return 'medium';
+                case '困难': return 'hard';
+                default: return '';
+            }
+        }
+
+        // 搜索功能
+        function searchCommands() {
+            const query = document.getElementById('search-input').value;
+            renderCards(query);
+        }
+
+        // 标记学习完成
+        function markComplete(id) {
+            if (!completedCommands.includes(id)) {
+                completedCommands.push(id);
+                localStorage.setItem('completedCommands', JSON.stringify(completedCommands));
+                renderCards(document.getElementById('search-input').value);
+                updateProgress();
+            }
+        }
+
+        // 更新进度
+        function updateProgress() {
+            const percentage = Math.round((completedCommands.length / dockerCommands.length) * 100);
+            document.getElementById('progress-percentage').textContent = `${percentage}%`;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+
+            const levelList = document.getElementById('level-list');
+            levelList.innerHTML = dockerCommands.map(cmd => {
+                const isCompleted = completedCommands.includes(cmd.id);
+                const isNext = completedCommands.length === 0 && cmd.id === 1 ||
+                              completedCommands[completedCommands.length - 1] === cmd.id - 1 &&
+                              !isCompleted;
+
+                return `
+                    <div class="level-item">
+                        <div class="level-icon ${isCompleted ? 'completed' : ''} ${isNext ? 'current' : ''}">
+                            ${isCompleted ? '✓' : cmd.icon}
+                        </div>
+                        <div class="level-name">${cmd.title}</div>
+                        <div class="level-status ${isCompleted ? 'completed' : ''}">
+                            ${isCompleted ? '已完成' : isNext ? '学习中' : '待学习'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 重置进度
+        function resetProgress() {
+            if (confirm('确定要重置所有学习进度吗？')) {
+                completedCommands = [];
+                localStorage.setItem('completedCommands', '[]');
+                updateProgress();
+                renderCards();
+            }
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+
+            if (tab === 'learn') {
+                document.querySelector('.nav-tab:nth-child(1)').classList.add('active');
+                document.getElementById('learn-section').classList.add('active');
+            } else if (tab === 'quiz') {
+                document.querySelector('.nav-tab:nth-child(2)').classList.add('active');
+                document.getElementById('quiz-section').classList.add('active');
+                renderQuiz();
+            } else if (tab === 'progress') {
+                document.querySelector('.nav-tab:nth-child(3)').classList.add('active');
+                document.getElementById('progress-section').classList.add('active');
+                updateProgress();
+            }
+        }
+
+        // 渲染测验
+        function renderQuiz() {
+            if (currentQuizIndex >= quizQuestions.length) {
+                showQuizResult();
+                return;
+            }
+
+            const question = quizQuestions[currentQuizIndex];
+            const container = document.getElementById('quiz-container');
+
+            container.innerHTML = `
+                <div class="quiz-question">
+                    ${currentQuizIndex + 1}. ${question.question}
+                </div>
+                <div class="quiz-options">
+                    ${question.options.map((opt, i) => `
+                        <div class="quiz-option" onclick="selectOption(${i})" data-index="${i}">
+                            ${opt}
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="quiz-button" onclick="submitAnswer()" ${selectedAnswers.length === 0 ? 'disabled' : ''}>
+                    提交答案
+                </button>
+            `;
+        }
+
+        // 选择选项
+        function selectOption(index) {
+            selectedAnswers = [index];
+            document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+                opt.classList.toggle('selected', i === index);
+            });
+            document.querySelector('.quiz-button').disabled = false;
+        }
+
+        // 提交答案
+        function submitAnswer() {
+            const question = quizQuestions[currentQuizIndex];
+            const selected = selectedAnswers[0];
+            const options = document.querySelectorAll('.quiz-option');
+
+            options.forEach((opt, i) => {
+                opt.classList.remove('selected');
+                if (i === question.correct) {
+                    opt.classList.add('correct');
+                } else if (i === selected && selected !== question.correct) {
+                    opt.classList.add('wrong');
+                }
+            });
+
+            if (selected === question.correct) {
+                quizScore++;
+            }
+
+            setTimeout(() => {
+                currentQuizIndex++;
+                selectedAnswers = [];
+                renderQuiz();
+            }, 1500);
+        }
+
+        // 显示测验结果
+        function showQuizResult() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = `
+                <div class="quiz-result">
+                    <h2>🎉 测验完成！</h2>
+                    <p>你的得分</p>
+                    <div class="score">${quizScore}/${quizQuestions.length}</div>
+                    <p>${getResultMessage()}</p>
+                    <button class="quiz-button" onclick="restartQuiz()">再来一次</button>
+                </div>
+            `;
+        }
+
+        function getResultMessage() {
+            const percentage = (quizScore / quizQuestions.length) * 100;
+            if (percentage >= 90) return '太棒了！你是Docker大师！🏆';
+            if (percentage >= 70) return '做得不错！继续加油！💪';
+            if (percentage >= 50) return '还可以，多复习一下！📚';
+            return '别灰心，多学习多练习！🎯';
+        }
+
+        // 重启测验
+        function restartQuiz() {
+            currentQuizIndex = 0;
+            quizScore = 0;
+            selectedAnswers = [];
+            renderQuiz();
+        }
+
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
