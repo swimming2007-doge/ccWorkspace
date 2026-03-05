@@ -1,0 +1,95 @@
+# ArXiv Blog Agent - 生产环境配置模板（内网）
+# 说明：此文件为内网环境配置模板，需要根据实际内网环境修改
+
+# ============================================
+# 重要：部署前请修改以下配置项
+# ============================================
+
+agent:
+  arxiv_query: "large model training inference"
+  arxiv_max_results: 10
+  content_style: "professional"
+  content_language: "zh"
+  title_prefix: "内网知识库周报 - "
+  blog_status: "publish"
+  dry_run: false
+  log_level: "INFO"
+
+# ArXiv 爬取配置（内网镜像）
+arxiv_scraper:
+  # 修改为内网 ArXiv 镜像地址
+  base_url: "https://arxiv-mirror.internal.corp/search/"
+  timeout: 60
+  max_retries: 5
+  retry_delay: 3
+  # 配置内网代理
+  proxy: "http://proxy.internal.corp:8080"
+  # 内网自签名证书场景
+  ssl_verify: false
+  default_query: "large model training inference"
+  default_max_results: 10
+
+# 内容生成配置
+content_generator:
+  title_prefix: "内网知识库周报 - "
+  default_category: "技术分享"
+  max_abstract_length: 300
+
+# 博客发布配置（内网平台）
+blog_poster:
+  # 修改为内网博客平台 API 地址
+  api_base: "https://internal-blog.internal.corp/api/v1"
+  # 修改为内网博客 ID
+  blog_id: "${INTERNAL_BLOG_ID}"
+  blog_url: "https://internal-blog.internal.corp/"
+  # 修改为真实的访问令牌
+  # 建议使用环境变量: ${INTERNAL_BLOG_TOKEN}
+  access_token: "${INTERNAL_BLOG_TOKEN}"
+  default_status: "publish"
+  timeout: 60
+  max_retries: 5
+  # 配置内网代理
+  proxy: "http://proxy.internal.corp:8080"
+  # 内网自签名证书
+  ssl_verify: false
+
+# 网络配置
+network:
+  timeout: 60
+  connect_timeout: 30
+  read_timeout: 60
+  max_retries: 5
+  retry_delay: 2.0
+  pool_connections: 20
+  pool_maxsize: 20
+  # 内网代理配置
+  proxy: "http://proxy.internal.corp:8080"
+  # 或者分别配置 HTTP/HTTPS 代理
+  # proxy_http: "http://proxy.internal.corp:8080"
+  # proxy_https: "http://proxy.internal.corp:8443"
+  ssl_verify: false
+  user_agent: "Internal-Blog-Agent/1.0"
+  log_level: "DEBUG"
+
+# 日志配置
+logging:
+  level: "INFO"
+  file: "/var/log/arxiv-blog-agent/agent.log"
+  format: "[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
+
+# ============================================
+# 环境变量说明
+# ============================================
+# 部署时需要设置以下环境变量：
+#
+# INTERNAL_BLOG_ID: 内网博客 ID
+# INTERNAL_BLOG_TOKEN: 内网博客访问令牌
+#
+# 示例（Linux/Mac）:
+#   export INTERNAL_BLOG_ID="your_blog_id"
+#   export INTERNAL_BLOG_TOKEN="your_token"
+#
+# 示例（Windows）:
+#   set INTERNAL_BLOG_ID=your_blog_id
+#   set INTERNAL_BLOG_TOKEN=your_token
+# ============================================
