@@ -54,11 +54,15 @@ export const RideDAO = {
       take?: number;
       orderBy?: Prisma.RideOrderByWithRelationInput;
       status?: string;
+      updatedAfter?: Date;
     }
   ): Promise<Ride[]> {
     const where: Prisma.RideWhereInput = { userId };
     if (options?.status) {
       where.status = options.status;
+    }
+    if (options?.updatedAfter) {
+      where.updatedAt = { gt: options.updatedAfter };
     }
 
     return prisma.ride.findMany({
@@ -230,6 +234,48 @@ export const RideDAO = {
       where: { rideId },
       orderBy: { startIndex: 'asc' },
     });
+  },
+
+  /**
+   * Get track points by ride ID
+   */
+  async getTrackPoints(rideId: string): Promise<any[]> {
+    return prisma.trackPoint.findMany({
+      where: { rideId },
+      orderBy: { timestamp: 'asc' },
+    });
+  },
+
+  /**
+   * Insert track points
+   */
+  async insertTrackPoints(
+    rideId: string,
+    points: Array<{
+      timestamp: Date;
+      latitude: number;
+      longitude: number;
+      altitude?: number | null;
+      speed?: number | null;
+      heartRate?: number | null;
+    }>
+  ): Promise<number> {
+    const data = points.map(point => ({
+      rideId,
+      timestamp: point.timestamp,
+      latitude: point.latitude,
+      longitude: point.longitude,
+      altitude: point.altitude,
+      speed: point.speed,
+      heartRate: point.heartRate,
+    }));
+
+    const result = await prisma.trackPoint.createMany({
+      data,
+      skipDuplicates: true,
+    });
+
+    return result.count;
   },
 };
 

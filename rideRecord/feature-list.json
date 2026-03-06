@@ -475,7 +475,7 @@
         "数据完整性100%"
       ],
       "srs_reference": "FR-005",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F015",
@@ -498,7 +498,7 @@
         "安全无漏洞"
       ],
       "srs_reference": "FR-009",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F016",

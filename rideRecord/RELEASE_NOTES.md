@@ -78,6 +78,32 @@
   - 偏离路线检测
   - 导航控制按钮
   - 导航页面 (NavigationPage.ets)
+- **F014 云端同步服务** (手机+服务端)
+  - 手机端同步服务 (SyncService.ets)
+  - 同步状态管理和进度追踪
+  - 断点续传支持
+  - 增量同步
+  - 自动同步和批量同步
+  - 同步界面组件 (SyncComponents.ets)
+  - 同步页面 (SyncPage.ets)
+  - 服务端OBS存储服务 (obs.service.ts)
+  - 华为云OBS SDK集成
+  - 分片上传支持
+  - 服务端同步服务 (sync.service.ts)
+  - 数据上传处理API
+  - 增量同步API
+  - 批量同步接口
+- **F015 用户认证服务** (手机+服务端)
+  - 手机端认证服务 (AuthService.ets)
+  - 华为账号OAuth登录
+  - JWT Token管理和刷新
+  - 登录状态持久化
+  - 游客模式登录
+  - 登录页面 (LoginPage.ets)
+  - 个人中心组件
+  - 服务端认证服务 (auth.service.ts)
+  - OAuth回调处理
+  - JWT生成和验证
 
 #### 技术架构
 - 采用轻量化单体架构

@@ -4,6 +4,7 @@ import { authenticate, generateToken, generateRefreshToken, verifyRefreshToken }
 import { authRateLimiter } from '../middleware/rate-limit.middleware';
 import { ApiError } from '../middleware/error.middleware';
 import { UserDAO } from '../db/dao';
+import authService from '../services/auth.service';
 
 const router = Router();
 
@@ -14,6 +15,15 @@ const router = Router();
 const loginSchema = z.object({
   huaweiId: z.string().optional(),
   code: z.string().optional(), // OAuth authorization code
+});
+
+const huaweiCallbackSchema = z.object({
+  code: z.string(),
+  clientId: z.string().optional(),
+});
+
+const refreshTokenSchema = z.object({
+  refreshToken: z.string(),
 });
 
 const updateUserSchema = z.object({
@@ -43,6 +53,125 @@ const updateSettingsSchema = z.object({
 
 /**
  * @swagger
+ * /auth/huawei/url:
+ *   get:
+ *     summary: Get Huawei OAuth authorization URL
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *         description: State parameter for CSRF protection
+ *     responses:
+ *       200:
+ *         description: Authorization URL generated
+ */
+router.get('/huawei/url', (req: Request, res: Response) => {
+  const state = req.query.state as string || Math.random().toString(36).substring(7);
+  const authUrl = authService.getHuaweiAuthUrl(state);
+
+  res.json({
+    authUrl,
+    state,
+    expiresIn: 300, // 5 minutes
+  });
+});
+
+/**
+ * @swagger
+ * /auth/huawei/callback:
+ *   post:
+ *     summary: Handle Huawei OAuth callback
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: OAuth authorization code
+ *               clientId:
+ *                 type: string
+ *                 description: Client ID
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
+router.post('/huawei/callback', authRateLimiter, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { code, clientId } = huaweiCallbackSchema.parse(req.body);
+
+    // 使用认证服务处理回调
+    const tokens = await authService.handleHuaweiCallback(code, clientId || 'riderecord_mobile');
+
+    // 获取用户信息
+    const payload = authService.verifyAccessToken(tokens.accessToken);
+
+    let user = null;
+    if (payload) {
+      user = await UserDAO.findById(payload.userId);
+    }
+
+    res.json({
+      message: 'Login successful',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+      tokenType: tokens.tokenType,
+      user: user ? {
+        id: user.id,
+        huaweiId: user.huaweiId,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        email: user.email,
+        phone: user.phone,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      } : null,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /auth/guest:
+ *   post:
+ *     summary: Create guest user (for testing)
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Guest user created
+ */
+router.post('/guest', authRateLimiter, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { user, tokens } = await authService.createGuestUser();
+
+    res.json({
+      message: 'Guest user created',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+      tokenType: tokens.tokenType,
+      user: {
+        id: user.id,
+        nickname: user.nickname,
+        isGuest: user.isGuest,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
  * /auth/login:
  *   post:
  *     summary: Login with Huawei OAuth
@@ -69,35 +198,30 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response, next:
       throw ApiError.badRequest('Authorization code is required');
     }
 
-    // TODO: Implement Huawei OAuth token exchange
-    // For now, create a mock user for development
-    let user = await UserDAO.findByHuaweiId('mock-huawei-id');
+    // 使用认证服务处理登录
+    const tokens = await authService.handleHuaweiCallback(code, 'riderecord_mobile');
 
-    if (!user) {
-      user = await UserDAO.create({
-        huaweiId: 'mock-huawei-id',
-        nickname: 'Rider',
-      });
+    // 获取用户信息
+    const payload = authService.verifyAccessToken(tokens.accessToken);
+
+    let user = null;
+    if (payload) {
+      user = await UserDAO.findById(payload.userId);
+      if (user) {
+        await UserDAO.updateLastLogin(user.id);
+      }
     }
-
-    // Update last login
-    await UserDAO.updateLastLogin(user.id);
-
-    // Generate tokens
-    const accessToken = generateToken({ id: user.id, huaweiId: user.huaweiId || undefined });
-    const refreshToken = generateRefreshToken({ id: user.id, huaweiId: user.huaweiId || undefined });
 
     res.json({
       message: 'Login successful',
-      user: {
+      user: user ? {
         id: user.id,
         nickname: user.nickname,
         avatar: user.avatar,
-      },
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
+      } : null,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
     });
   } catch (error) {
     next(error);
@@ -113,28 +237,21 @@ router.post('/login', authRateLimiter, async (req: Request, res: Response, next:
  */
 router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken } = refreshTokenSchema.parse(req.body);
 
-    if (!refreshToken) {
-      throw ApiError.badRequest('Refresh token is required');
+    // 使用认证服务刷新Token
+    const tokens = await authService.refreshAccessToken(refreshToken);
+
+    if (!tokens) {
+      throw ApiError.unauthorized('Invalid or expired refresh token');
     }
-
-    const decoded = verifyRefreshToken(refreshToken);
-    const user = await UserDAO.findById(decoded.id);
-
-    if (!user) {
-      throw ApiError.unauthorized('User not found');
-    }
-
-    const accessToken = generateToken({ id: user.id, huaweiId: user.huaweiId || undefined });
-    const newRefreshToken = generateRefreshToken({ id: user.id, huaweiId: user.huaweiId || undefined });
 
     res.json({
       message: 'Token refreshed',
-      tokens: {
-        accessToken,
-        refreshToken: newRefreshToken,
-      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+      tokenType: tokens.tokenType,
     });
   } catch (error) {
     next(error);
@@ -148,10 +265,18 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
  *     summary: Logout user
  *   tags: [Auth]
  */
-router.post('/logout', authenticate, (req: Request, res: Response) => {
-  // In a stateless JWT system, logout is handled client-side
-  // Optionally, add token to blacklist if needed
-  res.json({ message: 'Logged out successfully' });
+router.post('/logout', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      authService.revokeToken(refreshToken);
+    }
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
@@ -159,7 +284,7 @@ router.post('/logout', authenticate, (req: Request, res: Response) => {
  * /auth/me:
  *   get:
  *     summary: Get current user info
- *     tags: [Auth]
+ *   tags: [Auth]
  */
 router.get('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -170,27 +295,27 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
     }
 
     res.json({
-      user: {
-        id: user.id,
-        nickname: user.nickname,
-        avatar: user.avatar,
-        email: user.email,
-        phone: user.phone,
-        height: user.height,
-        weight: user.weight,
-        maxHeartRate: user.maxHeartRate,
-        birthDate: user.birthDate,
-        defaultNavMode: user.defaultNavMode,
-        adventureRatio: user.adventureRatio,
-        unitSystem: user.unitSystem,
-        voiceNavigation: user.voiceNavigation,
-        autoStartStop: user.autoStartStop,
-        detectionSensitivity: user.detectionSensitivity,
-        cloudSyncEnabled: user.cloudSyncEnabled,
-        stravaConnected: user.stravaConnected,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-      },
+      id: user.id,
+      huaweiId: user.huaweiId,
+      nickname: user.nickname,
+      avatar: user.avatar,
+      email: user.email,
+      phone: user.phone,
+      height: user.height,
+      weight: user.weight,
+      maxHeartRate: user.maxHeartRate,
+      birthDate: user.birthDate,
+      defaultNavMode: user.defaultNavMode,
+      adventureRatio: user.adventureRatio,
+      unitSystem: user.unitSystem,
+      voiceNavigation: user.voiceNavigation,
+      autoStartStop: user.autoStartStop,
+      detectionSensitivity: user.detectionSensitivity,
+      cloudSyncEnabled: user.cloudSyncEnabled,
+      stravaConnected: user.stravaConnected,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt,
     });
   } catch (error) {
     next(error);
@@ -200,11 +325,11 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
 /**
  * @swagger
  * /auth/me:
- *   put:
+ *   patch:
  *     summary: Update current user info
- *     tags: [Auth]
+ *   tags: [Auth]
  */
-router.put('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = updateUserSchema.parse(req.body);
 
@@ -212,14 +337,13 @@ router.put('/me', authenticate, async (req: Request, res: Response, next: NextFu
 
     res.json({
       message: 'User updated successfully',
-      user: {
-        id: user.id,
-        nickname: user.nickname,
-        avatar: user.avatar,
-        height: user.height,
-        weight: user.weight,
-        maxHeartRate: user.maxHeartRate,
-      },
+      id: user.id,
+      nickname: user.nickname,
+      avatar: user.avatar,
+      height: user.height,
+      weight: user.weight,
+      maxHeartRate: user.maxHeartRate,
+      updatedAt: user.updatedAt,
     });
   } catch (error) {
     next(error);
@@ -231,7 +355,7 @@ router.put('/me', authenticate, async (req: Request, res: Response, next: NextFu
  * /auth/settings:
  *   put:
  *     summary: Update user settings
- *     tags: [Auth]
+ *   tags: [Auth]
  */
 router.put('/settings', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -252,6 +376,28 @@ router.put('/settings', authenticate, async (req: Request, res: Response, next: 
         pauseTimeout: user.pauseTimeout,
         cloudSyncEnabled: user.cloudSyncEnabled,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /auth/delete:
+ *   delete:
+ *     summary: Delete user account
+ *   tags: [Auth]
+ */
+router.delete('/delete', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // TODO: 实现账户删除逻辑
+    // 1. 删除用户数据
+    // 2. 删除云端数据
+    // 3. 注销账号
+
+    res.json({
+      message: 'Account deletion requested. Data will be removed within 30 days.',
     });
   } catch (error) {
     next(error);
