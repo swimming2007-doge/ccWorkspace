@@ -151,3 +151,50 @@ export interface DecisionTreeNode {
   right?: DecisionTreeNode;  // 右子节点
   label?: ActionType;        // 叶节点的标签
 }
+
+// ==================== BLE 通信协议 ====================
+
+/**
+ * BLE 服务 UUID
+ */
+export const BLE_SERVICE_UUID = '0000FFE0-0000-1000-8000-00805F9B34FB';
+
+/**
+ * BLE 特征 UUID
+ */
+export const BLE_CHARACTERISTIC_UUID = '0000FFE1-0000-1000-8000-00805F9B34FB';
+
+/**
+ * BLE 数据包类型
+ */
+export enum BlePacketType {
+  HEARTBEAT = 0x01,          // 心跳包
+  SENSOR_DATA = 0x02,        // 传感器数据
+  RIDE_STATE = 0x03,         // 骑行状态
+  SYNC_REQUEST = 0x04,       // 同步请求
+  SYNC_RESPONSE = 0x05,      // 同步响应
+  TRACK_POINT = 0x06,        // 轨迹点
+  RIDE_SUMMARY = 0x07,       // 骑行总结
+  ACK = 0x08,                // 确认包
+  ERROR = 0xFF               // 错误包
+}
+
+/**
+ * BLE 连接状态
+ */
+export enum ConnectionState {
+  DISCONNECTED = 'DISCONNECTED',
+  CONNECTING = 'CONNECTING',
+  CONNECTED = 'CONNECTED',
+  DISCONNECTING = 'DISCONNECTING'
+}
+
+/**
+ * BLE 设备信息
+ */
+export interface BleDeviceInfo {
+  deviceId: string;
+  deviceName: string;
+  rssi: number;
+  serviceUuids: string[];
+}

@@ -287,7 +287,7 @@
         "数据传输延迟 < 500ms",
         "断线自动重连"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F007",
