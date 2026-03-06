@@ -48,6 +48,12 @@
   - 心率区间可视化 (环形图 + 分布条)
   - 地图轨迹实时绘制组件
   - 支持横竖屏切换
+- **F010 骑行记录存储** (手机)
+  - 数据库服务 (DatabaseService.ets)
+  - 骑行记录存储服务 (RideStorageService.ets)
+  - 数据导出服务 (ExportService.ets)
+  - GPX/TCX/JSON 格式导出
+  - 轨迹点按月分表优化
 
 #### 技术架构
 - 采用轻量化单体架构
