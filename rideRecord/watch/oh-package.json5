@@ -1,0 +1,19 @@
+{
+  "name": "riderecord-watch",
+  "version": "1.0.0",
+  "description": "RideRecord 手表应用 - 智能骑行记录",
+  "main": "",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@ohos/hypium": "1.0.6"
+  },
+  "devDependencies": {
+    "@ohos/hvigor-ohos-plugin": "4.0.2",
+    "@ohos/hvigor": "4.0.2"
+  },
+  "dynamicDependencies": {},
+  "overrides": {
+    "@ohos/hypium": "1.0.6"
+  }
+}

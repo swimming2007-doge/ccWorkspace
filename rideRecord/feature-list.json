@@ -240,7 +240,7 @@
         "CPU占用 < 30%"
       ],
       "srs_reference": "FR-001",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F005",

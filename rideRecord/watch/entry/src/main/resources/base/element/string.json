@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "RideRecord 智能骑行记录手表应用"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "RideRecord 主入口"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "RideRecord"
+    },
+    {
+      "name": "permission_accelerometer_reason",
+      "value": "用于检测骑行动作，实现自动启停功能"
+    },
+    {
+      "name": "permission_gyroscope_reason",
+      "value": "用于检测骑行动作，实现自动启停功能"
+    },
+    {
+      "name": "permission_health_data_reason",
+      "value": "用于读取心率数据，实时监控运动状态"
+    },
+    {
+      "name": "permission_location_reason",
+      "value": "用于记录骑行轨迹和计算速度"
+    }
+  ]
+}
