@@ -1,0 +1,745 @@
+{
+  "project": {
+    "name": "RideRecord",
+    "version": "0.1.0",
+    "description": "智能骑行记录应用 - 动作检测自动启停，探险导航模式",
+    "tech_stack": {
+      "phone": {
+        "language": "ArkTS",
+        "framework": "ArkUI",
+        "platform": "HarmonyOS NEXT",
+        "storage": "SQLite (@ohos.data.relationalStore)",
+        "sensors": "@ohos.sensor",
+        "bluetooth": "@ohos.bluetooth",
+        "map": "华为地图Kit / 高德地图SDK"
+      },
+      "watch": {
+        "language": "ArkTS",
+        "framework": "ArkUI (Watch)",
+        "platform": "Watch OS",
+        "sensors": "@ohos.sensor (加速度计、陀螺仪、心率、GPS)",
+        "bluetooth": "@ohos.bluetooth (BLE)",
+        "storage": "@ohos.data.preferences"
+      },
+      "server": {
+        "runtime": "Node.js 20 LTS",
+        "framework": "Express/Fastify",
+        "database": "SQLite 3 (better-sqlite3)",
+        "orm": "Prisma",
+        "storage": "华为云OBS SDK",
+        "auth": "JWT"
+      },
+      "web": {
+        "framework": "Vue 3 + TypeScript",
+        "build": "Vite",
+        "state": "Pinia",
+        "router": "Vue Router 4",
+        "styling": "TailwindCSS",
+        "charts": "ECharts 5",
+        "map": "高德地图 JS API / Mapbox GL JS",
+        "http": "Axios"
+      }
+    },
+    "target_devices": [
+      "华为 Mate 70 (HarmonyOS NEXT)",
+      "Huawei Watch 3 Pro (Watch OS)",
+      "Web Browser (Chrome, Safari, Firefox)"
+    ],
+    "design_doc": "docs/plans/ride-record-design.md",
+    "srs_doc": "docs/plans/ride-record-srs.md",
+    "ucd_doc": "docs/plans/ride-record-ucd.md"
+  },
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "Foundation",
+      "description": "项目骨架、CI配置、核心抽象层",
+      "exit_criteria": [
+        "所有项目目录创建完成",
+        "基础配置文件就绪",
+        "共享类型定义完成",
+        "数据库Schema设计完成"
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "MVP Core",
+      "description": "MVP核心功能：动作检测、数据采集、实时看板",
+      "exit_criteria": [
+        "动作检测模块通过测试",
+        "GPS和心率数据采集正常",
+        "实时数据看板可用",
+        "手机-手表BLE通信正常"
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "MVP Navigation & Sync",
+      "description": "MVP导航和同步功能",
+      "exit_criteria": [
+        "公路导航模式可用",
+        "云端同步功能正常",
+        "骑行记录持久化完成"
+      ]
+    },
+    {
+      "id": "M4",
+      "name": "MVP Release",
+      "description": "MVP版本发布",
+      "exit_criteria": [
+        "所有MVP功能测试通过",
+        "性能指标达标",
+        "应用市场审核通过"
+      ]
+    },
+    {
+      "id": "M5",
+      "name": "Full Version",
+      "description": "完整版本功能",
+      "exit_criteria": [
+        "探险导航模式可用",
+        "冒险指数计算正确",
+        "Web端可用",
+        "社交分享功能完成",
+        "Strava同步完成"
+      ]
+    },
+    {
+      "id": "M6",
+      "name": "Polish & Release",
+      "description": "优化与发布",
+      "exit_criteria": [
+        "NFR指标验证通过",
+        "文档完善",
+        "开源准备完成"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "id": "F001",
+      "name": "项目骨架与配置",
+      "description": "创建项目目录结构、配置文件、共享类型定义",
+      "priority": "P0",
+      "milestone": "M1",
+      "type": "foundation",
+      "platforms": ["shared"],
+      "dependencies": [],
+      "tasks": [
+        "创建项目目录结构 (phone/, watch/, server/, web/, shared/)",
+        "创建各平台基础配置文件",
+        "创建共享类型定义 (shared/types/)",
+        "创建共享工具函数 (shared/utils/)",
+        "创建共享常量 (shared/constants/)",
+        "配置 .gitignore 和 .env.example"
+      ],
+      "acceptance_criteria": [
+        "所有目录创建完成",
+        "TypeScript配置正确",
+        "共享模块可被各平台引用"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F002",
+      "name": "数据库Schema设计",
+      "description": "设计手机端SQLite和服务端Prisma Schema",
+      "priority": "P0",
+      "milestone": "M1",
+      "type": "backend",
+      "platforms": ["phone", "server"],
+      "dependencies": ["F001"],
+      "tasks": [
+        "设计手机端SQLite表结构 (users, rides, track_points, segments, photos, settings, sync_status)",
+        "创建服务端Prisma Schema",
+        "创建数据库迁移文件",
+        "创建数据访问层 (DAO)"
+      ],
+      "acceptance_criteria": [
+        "Schema符合设计文档",
+        "外键关系正确",
+        "索引优化完成"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F003",
+      "name": "服务端API骨架",
+      "description": "创建服务端Express应用骨架和API路由",
+      "priority": "P0",
+      "milestone": "M1",
+      "type": "backend",
+      "platforms": ["server"],
+      "dependencies": ["F001", "F002"],
+      "tasks": [
+        "创建Express应用入口",
+        "配置中间件 (CORS, JSON, 日志)",
+        "创建路由骨架 (/auth, /rides, /sync, /navigation, /stats, /devices)",
+        "创建JWT认证中间件",
+        "配置错误处理中间件"
+      ],
+      "acceptance_criteria": [
+        "服务可启动",
+        "健康检查接口正常",
+        "Swagger文档可访问"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F004",
+      "name": "动作检测核心算法",
+      "description": "实现手表端动作检测算法，检测上车、下车、踩踏等动作",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "core",
+      "platforms": ["watch"],
+      "dependencies": ["F001"],
+      "tasks": [
+        "实现传感器数据采集 (加速度计、陀螺仪)",
+        "实现数据缓冲队列 (滑动窗口)",
+        "实现特征提取算法",
+        "实现动作分类器 (决策树)",
+        "实现骑行状态机",
+        "单元测试"
+      ],
+      "acceptance_criteria": [
+        "检测准确率 > 85%",
+        "检测延迟 < 3秒",
+        "CPU占用 < 30%"
+      ],
+      "srs_reference": "FR-001",
+      "status": "pending"
+    },
+    {
+      "id": "F005",
+      "name": "手表端骑行界面",
+      "description": "实现手表端骑行数据展示界面",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "frontend",
+      "platforms": ["watch"],
+      "dependencies": ["F001", "F004"],
+      "tasks": [
+        "创建主表盘页面 (HomePage.ets)",
+        "创建骑行中页面 (RidingPage.ets)",
+        "创建骑行总结页面 (SummaryPage.ets)",
+        "实现心率实时显示",
+        "实现速度/距离显示",
+        "实现圆弧按钮交互"
+      ],
+      "acceptance_criteria": [
+        "界面响应流畅 (< 60fps)",
+        "数据实时更新",
+        "圆弧按钮响应正常"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F006",
+      "name": "手机-手表BLE通信",
+      "description": "实现手机与手表之间的蓝牙数据同步",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "core",
+      "platforms": ["phone", "watch"],
+      "dependencies": ["F001"],
+      "tasks": [
+        "实现手表端BLE服务",
+        "实现手机端BLE客户端",
+        "定义数据传输协议",
+        "实现数据包分包/重组",
+        "实现断线重连机制"
+      ],
+      "acceptance_criteria": [
+        "连接成功率 > 95%",
+        "数据传输延迟 < 500ms",
+        "断线自动重连"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F007",
+      "name": "GPS数据采集",
+      "description": "实现手机和手表的GPS数据采集",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "core",
+      "platforms": ["phone", "watch"],
+      "dependencies": ["F001"],
+      "tasks": [
+        "实现手机端GPS采集服务",
+        "实现手表端GPS采集服务",
+        "实现GPS数据融合 (手机+手表)",
+        "实现GPS信号丢失处理",
+        "实现轨迹平滑算法"
+      ],
+      "acceptance_criteria": [
+        "GPS精度 < 10米",
+        "信号丢失自动恢复",
+        "轨迹数据完整性 > 99%"
+      ],
+      "srs_reference": "FR-002",
+      "status": "pending"
+    },
+    {
+      "id": "F008",
+      "name": "心率数据采集",
+      "description": "实现手表心率数据采集和处理",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "core",
+      "platforms": ["watch"],
+      "dependencies": ["F001"],
+      "tasks": [
+        "实现心率传感器数据采集",
+        "实现心率区间计算",
+        "实现心率异常检测",
+        "实现心率数据缓存"
+      ],
+      "acceptance_criteria": [
+        "心率采集频率 1Hz",
+        "数据准确率 > 95%",
+        "支持心率区间统计"
+      ],
+      "srs_reference": "FR-002",
+      "status": "pending"
+    },
+    {
+      "id": "F009",
+      "name": "手机端实时数据看板",
+      "description": "实现手机端骑行过程中的实时数据展示",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "frontend",
+      "platforms": ["phone"],
+      "dependencies": ["F001", "F006", "F007", "F008"],
+      "tasks": [
+        "创建实时看板页面",
+        "实现速度/距离/时间显示",
+        "实现心率区间可视化",
+        "实现海拔/坡度显示",
+        "实现地图轨迹实时绘制"
+      ],
+      "acceptance_criteria": [
+        "数据刷新频率 1Hz",
+        "界面流畅无卡顿",
+        "支持横竖屏切换"
+      ],
+      "srs_reference": "FR-004",
+      "status": "pending"
+    },
+    {
+      "id": "F010",
+      "name": "骑行记录存储",
+      "description": "实现骑行记录的本地存储和持久化",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "backend",
+      "platforms": ["phone"],
+      "dependencies": ["F002", "F007", "F008"],
+      "tasks": [
+        "实现骑行记录CRUD",
+        "实现轨迹点存储优化 (分表)",
+        "实现照片存储管理",
+        "实现数据导出 (GPX/TCX)"
+      ],
+      "acceptance_criteria": [
+        "数据持久化可靠",
+        "查询性能 < 100ms",
+        "支持大量轨迹点存储"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F011",
+      "name": "手机端骑行记录列表",
+      "description": "实现手机端骑行历史记录列表页面",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "frontend",
+      "platforms": ["phone"],
+      "dependencies": ["F001", "F010"],
+      "tasks": [
+        "创建记录列表页面",
+        "实现列表项组件",
+        "实现筛选和排序",
+        "实现下拉刷新和分页加载"
+      ],
+      "acceptance_criteria": [
+        "列表加载流畅",
+        "支持日期范围筛选",
+        "支持类型筛选"
+      ],
+      "srs_reference": "FR-004",
+      "status": "pending"
+    },
+    {
+      "id": "F012",
+      "name": "手机端骑行详情页",
+      "description": "实现手机端单次骑行的详细数据展示",
+      "priority": "P0",
+      "milestone": "M2",
+      "type": "frontend",
+      "platforms": ["phone"],
+      "dependencies": ["F001", "F010"],
+      "tasks": [
+        "创建骑行详情页面",
+        "实现轨迹地图展示",
+        "实现速度/心率/海拔图表",
+        "实现分段数据展示",
+        "实现照片展示"
+      ],
+      "acceptance_criteria": [
+        "地图加载流畅",
+        "图表交互流畅",
+        "支持轨迹回放"
+      ],
+      "srs_reference": "FR-004",
+      "status": "pending"
+    },
+    {
+      "id": "F013",
+      "name": "公路导航模式",
+      "description": "实现基于公路的骑行导航功能",
+      "priority": "P0",
+      "milestone": "M3",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F001", "F007"],
+      "tasks": [
+        "集成地图SDK",
+        "实现路线规划API调用",
+        "实现导航界面",
+        "实现语音提示",
+        "实现路线偏离重算"
+      ],
+      "acceptance_criteria": [
+        "路线计算时间 < 5秒",
+        "语音提示准确",
+        "支持实时路况"
+      ],
+      "srs_reference": "FR-003",
+      "status": "pending"
+    },
+    {
+      "id": "F014",
+      "name": "云端同步服务",
+      "description": "实现骑行数据到华为云OBS的同步",
+      "priority": "P0",
+      "milestone": "M3",
+      "type": "feature",
+      "platforms": ["phone", "server"],
+      "dependencies": ["F003", "F010"],
+      "tasks": [
+        "集成华为云OBS SDK",
+        "实现数据上传服务",
+        "实现断点续传",
+        "实现增量同步",
+        "服务端接收和存储接口"
+      ],
+      "acceptance_criteria": [
+        "同步延迟 < 30秒",
+        "支持断点续传",
+        "数据完整性100%"
+      ],
+      "srs_reference": "FR-005",
+      "status": "pending"
+    },
+    {
+      "id": "F015",
+      "name": "用户认证服务",
+      "description": "实现华为账号OAuth登录和JWT认证",
+      "priority": "P0",
+      "milestone": "M3",
+      "type": "backend",
+      "platforms": ["phone", "server"],
+      "dependencies": ["F003"],
+      "tasks": [
+        "实现华为OAuth登录",
+        "实现JWT Token生成和验证",
+        "实现Token刷新机制",
+        "实现用户信息管理API"
+      ],
+      "acceptance_criteria": [
+        "登录流程顺畅",
+        "Token有效期正确",
+        "安全无漏洞"
+      ],
+      "srs_reference": "FR-009",
+      "status": "pending"
+    },
+    {
+      "id": "F016",
+      "name": "探险导航模式",
+      "description": "实现包含非公路路线的探险导航",
+      "priority": "P1",
+      "milestone": "M5",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F013"],
+      "tasks": [
+        "实现探险路网数据获取",
+        "实现混合路线规划算法",
+        "实现探险路线UI渲染",
+        "实现路况预警提示"
+      ],
+      "acceptance_criteria": [
+        "支持土路、村道、山地车道",
+        "路线规划合理",
+        "路况预警准确"
+      ],
+      "srs_reference": "FR-003",
+      "status": "pending"
+    },
+    {
+      "id": "F017",
+      "name": "冒险指数计算",
+      "description": "实现路线冒险指数实时计算和显示",
+      "priority": "P1",
+      "milestone": "M5",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F016"],
+      "tasks": [
+        "实现冒险指数算法",
+        "集成高程数据获取",
+        "集成信号覆盖数据",
+        "集成天气API",
+        "实现风险等级可视化"
+      ],
+      "acceptance_criteria": [
+        "指数计算准确",
+        "实时更新",
+        "可视化清晰"
+      ],
+      "srs_reference": "FR-003",
+      "status": "pending"
+    },
+    {
+      "id": "F018",
+      "name": "离线地图",
+      "description": "实现离线地图下载和管理",
+      "priority": "P1",
+      "milestone": "M5",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F013"],
+      "tasks": [
+        "实现地图瓦片下载",
+        "实现高程数据下载",
+        "实现存储空间管理",
+        "实现增量更新"
+      ],
+      "acceptance_criteria": [
+        "下载稳定可靠",
+        "存储管理合理",
+        "离线导航正常"
+      ],
+      "srs_reference": "FR-003-05",
+      "status": "pending"
+    },
+    {
+      "id": "F019",
+      "name": "统计分析模块",
+      "description": "实现骑行数据的统计分析功能",
+      "priority": "P1",
+      "milestone": "M5",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F010", "F011"],
+      "tasks": [
+        "实现日/周/月/年统计",
+        "实现总里程、时长、热量统计",
+        "实现平均速度趋势图",
+        "实现心率区间分布图",
+        "实现热力图"
+      ],
+      "acceptance_criteria": [
+        "统计准确",
+        "图表交互流畅",
+        "支持数据导出"
+      ],
+      "srs_reference": "FR-004-04",
+      "status": "pending"
+    },
+    {
+      "id": "F020",
+      "name": "Web端数据看板",
+      "description": "实现Web端骑行数据查看和管理",
+      "priority": "P1",
+      "milestone": "M5",
+      "type": "frontend",
+      "platforms": ["web"],
+      "dependencies": ["F003", "F014"],
+      "tasks": [
+        "创建Vue3项目骨架",
+        "实现登录页面",
+        "实现数据看板页面",
+        "实现记录列表和详情页面",
+        "实现统计分析页面"
+      ],
+      "acceptance_criteria": [
+        "响应式设计",
+        "主流浏览器兼容",
+        "性能流畅"
+      ],
+      "srs_reference": "FR-007",
+      "status": "pending"
+    },
+    {
+      "id": "F021",
+      "name": "微信分享功能",
+      "description": "实现骑行记录分享到微信好友和朋友圈",
+      "priority": "P1",
+      "milestone": "M5",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F010", "F012"],
+      "tasks": [
+        "集成微信SDK",
+        "实现分享内容生成",
+        "实现分享图片模板",
+        "实现分享配置"
+      ],
+      "acceptance_criteria": [
+        "分享成功率高",
+        "图片美观",
+        "内容可定制"
+      ],
+      "srs_reference": "FR-006",
+      "status": "pending"
+    },
+    {
+      "id": "F022",
+      "name": "Strava同步",
+      "description": "实现骑行数据同步到Strava平台",
+      "priority": "P2",
+      "milestone": "M5",
+      "type": "feature",
+      "platforms": ["phone", "server"],
+      "dependencies": ["F010", "F014"],
+      "tasks": [
+        "实现Strava OAuth授权",
+        "实现数据格式转换",
+        "实现同步服务",
+        "实现同步状态管理"
+      ],
+      "acceptance_criteria": [
+        "授权流程顺畅",
+        "数据同步完整",
+        "支持自动同步"
+      ],
+      "srs_reference": "FR-008",
+      "status": "pending"
+    },
+    {
+      "id": "F023",
+      "name": "用户设置模块",
+      "description": "实现用户个人信息和骑行偏好设置",
+      "priority": "P1",
+      "milestone": "M3",
+      "type": "feature",
+      "platforms": ["phone"],
+      "dependencies": ["F001"],
+      "tasks": [
+        "创建设置页面",
+        "实现个人信息设置",
+        "实现骑行偏好设置",
+        "实现动作检测设置",
+        "实现账号与同步设置"
+      ],
+      "acceptance_criteria": [
+        "设置保存持久化",
+        "设置实时生效",
+        "界面友好"
+      ],
+      "srs_reference": "FR-009",
+      "status": "pending"
+    },
+    {
+      "id": "F024",
+      "name": "性能优化与NFR验证",
+      "description": "优化应用性能，验证NFR指标",
+      "priority": "P0",
+      "milestone": "M6",
+      "type": "quality",
+      "platforms": ["phone", "watch", "server", "web"],
+      "dependencies": ["F009", "F012", "F013", "F020"],
+      "tasks": [
+        "启动时间优化 (< 3秒)",
+        "内存占用优化 (< 200MB)",
+        "电池消耗优化 (< 15%/小时)",
+        "GPS精度验证 (< 10米)",
+        "动作检测响应验证 (< 3秒)"
+      ],
+      "acceptance_criteria": [
+        "所有NFR指标达标",
+        "性能测试通过",
+        "无内存泄漏"
+      ],
+      "srs_reference": "NFR-001",
+      "status": "pending"
+    },
+    {
+      "id": "F025",
+      "name": "开源准备",
+      "description": "完成开源发布所需的文档和配置",
+      "priority": "P2",
+      "milestone": "M6",
+      "type": "documentation",
+      "platforms": ["shared"],
+      "dependencies": ["F024"],
+      "tasks": [
+        "创建LICENSE文件 (MIT)",
+        "创建README.md和README_EN.md",
+        "创建CONTRIBUTING.md",
+        "创建SECURITY.md",
+        "创建CHANGELOG.md",
+        "创建.github目录和模板"
+      ],
+      "acceptance_criteria": [
+        "文档完整规范",
+        "敏感信息已分离",
+        "开源前自查通过"
+      ],
+      "status": "pending"
+    }
+  ],
+  "risk_register": [
+    {
+      "id": "R001",
+      "risk": "Huawei Watch 3 Pro传感器API限制",
+      "impact": "high",
+      "probability": "medium",
+      "mitigation": "提前验证API能力，准备降级方案"
+    },
+    {
+      "id": "R002",
+      "risk": "动作检测准确率不达标",
+      "impact": "high",
+      "probability": "medium",
+      "mitigation": "收集真实骑行数据训练模型，持续优化算法"
+    },
+    {
+      "id": "R003",
+      "risk": "GPS信号丢失导致轨迹不完整",
+      "impact": "medium",
+      "probability": "high",
+      "mitigation": "实现轨迹插值补全，多源数据融合"
+    },
+    {
+      "id": "R004",
+      "risk": "电池消耗过快",
+      "impact": "high",
+      "probability": "medium",
+      "mitigation": "优化传感器采样频率，使用低功耗模式"
+    },
+    {
+      "id": "R005",
+      "risk": "微信/Strava API变更",
+      "impact": "medium",
+      "probability": "low",
+      "mitigation": "关注官方更新，预留适配时间"
+    }
+  ]
+}
