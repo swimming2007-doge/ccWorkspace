@@ -8,9 +8,9 @@
 
 ## Current State
 
-**当前里程碑**: M6 - Polish & Release
-**当前任务**: F024 完成，继续 M6 功能
-**状态**: ⏳ M6 进行中
+**当前里程碑**: M5 - Full Version
+**当前任务**: F016 完成，继续 M5 功能
+**状态**: ⏳ M5 进行中
 
 ### 完成情况
 
@@ -20,7 +20,7 @@
 | M2 - MVP Core | ✅ 完成 | 100% |
 | M3 - MVP Navigation & Sync | ✅ 完成 | 100% |
 | M4 - MVP Release | ✅ 完成 | 100% |
-| M5 - Full Version | ⏳ 进行中 | 50% (4/8) |
+| M5 - Full Version | ⏳ 进行中 | 62% (5/8) |
 | M6 - Polish & Release | ⏳ 进行中 | 50% (1/2) |
 
 ### 功能进度
@@ -43,7 +43,7 @@
 | F013 | 公路导航模式 | P0 | ✅ 完成 |
 | F014 | 云端同步服务 | P0 | ✅ 完成 |
 | F015 | 用户认证服务 | P0 | ✅ 完成 |
-| F016 | 探险导航模式 | P1 | ⏳ 待开始 |
+| F016 | 探险导航模式 | P1 | ✅ 完成 |
 | F017 | 冒险指数计算 | P1 | ⏳ 待开始 |
 | F018 | 离线地图 | P1 | ⏳ 待开始 |
 | F019 | 统计分析模块 | P1 | ✅ 完成 |
@@ -57,6 +57,32 @@
 ---
 
 ## Session Log
+
+### Session 3 - 2026-03-06 (续11)
+
+**目标**: 继续 M5 功能开发
+
+**完成事项**:
+- ✅ F016 探险导航模式
+  - 探险路网数据服务 (TrailDataService.ets)
+  - 探险导航服务 (AdventureNavigationService.ets)
+  - 探险路线渲染组件 (AdventureRouteRenderer.ets)
+  - 路况预警组件 (RoadWarningComponent.ets)
+  - 冒险指数指示器 (AdventureIndexIndicator.ets)
+  - 支持土路、村道、山地车道、小径导航
+  - 路况预警提示
+  - 冒险指数计算
+
+**进行中**:
+- 无
+
+**阻塞问题**:
+- 无
+
+**下一步**:
+- 继续M5功能开发 (F017 冒险指数计算)
+
+---
 
 ### Session 3 - 2026-03-06 (续10)
 

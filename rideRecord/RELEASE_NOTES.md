@@ -104,6 +104,15 @@
   - 服务端认证服务 (auth.service.ts)
   - OAuth回调处理
   - JWT生成和验证
+- **F016 探险导航模式** (手机)
+  - 探险路网数据服务 (TrailDataService.ets)
+  - 探险导航服务 (AdventureNavigationService.ets)
+  - 支持土路、村道、山地车道、小径导航
+  - 混合路线规划算法
+  - 探险路线渲染组件 (AdventureRouteRenderer.ets)
+  - 路况预警组件 (RoadWarningComponent.ets)
+  - 冒险指数指示器 (AdventureIndexIndicator.ets)
+  - 路况预警提示功能
 - **F023 用户设置模块** (手机)
   - 设置服务 (SettingsService.ets)
   - 骑行偏好设置 (导航模式、单位制、语音等)
