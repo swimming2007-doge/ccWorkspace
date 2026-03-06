@@ -142,6 +142,16 @@
   - 分享图片轨迹渲染
   - 分享UI组件 (ShareComponents.ets)
   - 分享页面 (SharePage.ets)
+- **F022 Strava同步** (手机+服务端)
+  - 手机端Strava服务 (StravaService.ets)
+  - 服务端Strava服务 (strava.service.ts)
+  - OAuth 2.0 认证流程
+  - GPX 文件生成和上传
+  - Token 管理和刷新
+  - 同步状态管理
+  - Webhook 事件处理
+  - Strava UI组件 (StravaComponents.ets)
+  - Strava同步页面 (StravaPage.ets)
 - **F023 用户设置模块** (手机)
   - 设置服务 (SettingsService.ets)
   - 骑行偏好设置 (导航模式、单位制、语音等)

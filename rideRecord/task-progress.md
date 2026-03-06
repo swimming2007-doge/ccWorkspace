@@ -8,9 +8,9 @@
 
 ## Current State
 
-**当前里程碑**: M5 - Full Version
-**当前任务**: F021 完成，M5 全部完成
-**状态**: ✅ M5 完成
+**当前里程碑**: M6 - Polish & Release
+**当前任务**: F022 完成，继续 M6 功能
+**状态**: ⏳ M6 进行中
 
 ### 完成情况
 
@@ -21,7 +21,7 @@
 | M3 - MVP Navigation & Sync | ✅ 完成 | 100% |
 | M4 - MVP Release | ✅ 完成 | 100% |
 | M5 - Full Version | ✅ 完成 | 100% (8/8) |
-| M6 - Polish & Release | ⏳ 进行中 | 50% (1/2) |
+| M6 - Polish & Release | ⏳ 进行中 | 100% (2/2) |
 
 ### 功能进度
 
@@ -49,7 +49,7 @@
 | F019 | 统计分析模块 | P1 | ✅ 完成 |
 | F020 | Web端数据看板 | P1 | ✅ 完成 |
 | F021 | 微信分享功能 | P1 | ✅ 完成 |
-| F022 | Strava同步 | P2 | ⏳ 待开始 |
+| F022 | Strava同步 | P2 | ✅ 完成 |
 | F023 | 用户设置模块 | P1 | ✅ 完成 |
 | F024 | 性能优化与NFR验证 | P0 | ✅ 完成 |
 | F025 | 开源准备 | P2 | ⏳ 待开始 |
@@ -57,6 +57,33 @@
 ---
 
 ## Session Log
+
+### Session 3 - 2026-03-06 (续15)
+
+**目标**: 完成 M6 里程碑
+
+**完成事项**:
+- ✅ F022 Strava同步
+  - 手机端Strava服务 (StravaService.ets)
+  - 服务端Strava服务 (strava.service.ts)
+  - OAuth 2.0 认证流程
+  - GPX 文件生成和上传
+  - Token 管理和刷新
+  - 同步状态管理
+  - Strava UI组件 (StravaComponents.ets)
+  - Strava同步页面 (StravaPage.ets)
+  - Webhook 事件处理
+
+**进行中**:
+- 无
+
+**阻塞问题**:
+- 无
+
+**下一步**:
+- 继续 M6 功能开发 (F025 开源准备)
+
+---
 
 ### Session 3 - 2026-03-06 (续14)
 
