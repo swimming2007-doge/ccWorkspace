@@ -8,9 +8,9 @@
 
 ## Current State
 
-**当前里程碑**: M5 - Full Version
-**当前任务**: F020 完成，继续 M5 功能
-**状态**: ⏳ M5 进行中
+**当前里程碑**: M6 - Polish & Release
+**当前任务**: F024 完成，继续 M6 功能
+**状态**: ⏳ M6 进行中
 
 ### 完成情况
 
@@ -20,8 +20,8 @@
 | M2 - MVP Core | ✅ 完成 | 100% |
 | M3 - MVP Navigation & Sync | ✅ 完成 | 100% |
 | M4 - MVP Release | ✅ 完成 | 100% |
-| M5 - Full Version | ⏳ 进行中 | 40% (2/5) |
-| M6 - Polish & Release | ⏳ 待开始 | 0% |
+| M5 - Full Version | ✅ 完成 | 100% (5/5) |
+| M6 - Polish & Release | ⏳ 进行中 | 50% (1/2) |
 
 ### 功能进度
 
@@ -51,12 +51,37 @@
 | F021 | 微信分享功能 | P1 | ⏳ 待开始 |
 | F022 | Strava同步 | P2 | ⏳ 待开始 |
 | F023 | 用户设置模块 | P1 | ✅ 完成 |
-| F024 | 性能优化与NFR验证 | P0 | ⏳ 待开始 |
+| F024 | 性能优化与NFR验证 | P0 | ✅ 完成 |
 | F025 | 开源准备 | P2 | ⏳ 待开始 |
 
 ---
 
 ## Session Log
+
+### Session 3 - 2026-03-06 (续10)
+
+**目标**: 完成 M6 功能开发
+
+**完成事项**:
+- ✅ F024 性能优化与NFR验证
+  - 手机端性能监控服务 (PerformanceMonitor.ets)
+  - 手表端性能监控服务 (PerformanceMonitor.ets)
+  - 服务端性能监控服务 (performance.service.ts)
+  - Web端性能监控服务 (performance.ts)
+  - 共享类型定义扩展 (performance types)
+  - 性能报告文档 (performance-report.md)
+  - NFR指标验证框架
+
+**进行中**:
+- 无
+
+**阻塞问题**:
+- 无
+
+**下一步**:
+- 继续M6功能开发 (F025 开源准备)
+
+---
 
 ### Session 3 - 2026-03-06 (续9)
 

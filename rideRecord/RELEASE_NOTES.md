@@ -135,6 +135,27 @@
   - 骑行列表页面
   - 骑行详情页面
   - 统计分析页面
+- **F024 性能优化与NFR验证** (全平台)
+  - 手机端性能监控服务 (PerformanceMonitor.ets)
+  - 手表端性能监控服务 (PerformanceMonitor.ets)
+  - 服务端性能监控服务 (performance.service.ts)
+  - Web端性能监控服务 (performance.ts)
+  - NFR指标验证框架
+  - 性能报告文档
+  - Web Vitals 监控
+  - Vue 3 + TypeScript + Vite 项目骨架
+  - TailwindCSS 样式配置
+  - Vue Router 路由
+  - Pinia 状态管理
+  - API 服务封装
+  - 认证存储
+  - 骑行数据存储
+  - 导航组件
+  - 登录页面
+  - 数据看板页面
+  - 骑行列表页面
+  - 骑行详情页面
+  - 统计分析页面
 
 #### 技术架构
 - 采用轻量化单体架构

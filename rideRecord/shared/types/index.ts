@@ -420,3 +420,76 @@ export interface BleDataPacket {
   data: string;  // Base64 编码的数据
   checksum: number;
 }
+
+// ===========================================
+// 性能监控类型
+// ===========================================
+
+/** 性能指标类型 */
+export type MetricType =
+  | 'startup'       // 启动时间
+  | 'memory'        // 内存占用
+  | 'battery'       // 电池消耗
+  | 'gps'           // GPS精度
+  | 'sync'          // 同步延迟
+  | 'action'        // 动作检测延迟
+  | 'navigation'    // 导航计算时间
+  | 'api';          // API响应时间
+
+/** 性能指标单位 */
+export type MetricUnit = 'ms' | 'MB' | 'percent' | 'meter' | 'second';
+
+/** 性能指标数据 */
+export interface PerformanceMetric {
+  id: string;
+  type: MetricType;
+  platform: 'phone' | 'watch' | 'server' | 'web';
+  value: number;
+  unit: MetricUnit;
+  timestamp: number;
+  threshold: number;      // 目标阈值
+  passed: boolean;        // 是否达标
+  metadata?: Record<string, unknown>;
+}
+
+/** NFR 目标配置 */
+export interface NfrThreshold {
+  id: string;
+  type: MetricType;
+  platform: ('phone' | 'watch' | 'server' | 'web')[];
+  maxValue: number;
+  unit: MetricUnit;
+  description: string;
+}
+
+/** 性能报告 */
+export interface PerformanceReport {
+  generatedAt: number;
+  platform: string;
+  version: string;
+  metrics: PerformanceMetric[];
+  summary: {
+    passed: number;
+    failed: number;
+    total: number;
+    passRate: number;
+  };
+  recommendations: string[];
+}
+
+/** Web Vitals 指标 */
+export interface WebVitals {
+  lcp: number;    // Largest Contentful Paint (ms)
+  fid: number;    // First Input Delay (ms)
+  cls: number;    // Cumulative Layout Shift
+  fcp: number;    // First Contentful Paint (ms)
+  ttfb: number;   // Time to First Byte (ms)
+}
+
+/** 性能监控配置 */
+export interface PerformanceMonitorConfig {
+  enabled: boolean;
+  samplingInterval: number;   // 采样间隔 (ms)
+  reportInterval: number;     // 报告间隔 (ms)
+  thresholds: NfrThreshold[];
+}

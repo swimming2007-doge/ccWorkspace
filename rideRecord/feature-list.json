@@ -710,7 +710,7 @@
         "无内存泄漏"
       ],
       "srs_reference": "NFR-001",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F025",
