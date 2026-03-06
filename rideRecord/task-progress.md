@@ -9,7 +9,7 @@
 ## Current State
 
 **当前里程碑**: M5 - Full Version
-**当前任务**: F019 完成，继续 M5 功能
+**当前任务**: F020 完成，继续 M5 功能
 **状态**: ⏳ M5 进行中
 
 ### 完成情况
@@ -20,7 +20,7 @@
 | M2 - MVP Core | ✅ 完成 | 100% |
 | M3 - MVP Navigation & Sync | ✅ 完成 | 100% |
 | M4 - MVP Release | ✅ 完成 | 100% |
-| M5 - Full Version | ⏳ 进行中 | 20% (1/5) |
+| M5 - Full Version | ⏳ 进行中 | 40% (2/5) |
 | M6 - Polish & Release | ⏳ 待开始 | 0% |
 
 ### 功能进度
@@ -47,7 +47,7 @@
 | F017 | 冒险指数计算 | P1 | ⏳ 待开始 |
 | F018 | 离线地图 | P1 | ⏳ 待开始 |
 | F019 | 统计分析模块 | P1 | ✅ 完成 |
-| F020 | Web端数据看板 | P1 | ⏳ 待开始 |
+| F020 | Web端数据看板 | P1 | ✅ 完成 |
 | F021 | 微信分享功能 | P1 | ⏳ 待开始 |
 | F022 | Strava同步 | P2 | ⏳ 待开始 |
 | F023 | 用户设置模块 | P1 | ✅ 完成 |
@@ -57,6 +57,37 @@
 ---
 
 ## Session Log
+
+### Session 3 - 2026-03-06 (续9)
+
+**目标**: 继续 M5 功能开发
+
+**完成事项**:
+- ✅ F020 Web端数据看板
+  - Vue 3 + TypeScript + Vite 项目结构
+  - TailwindCSS 样式
+  - Vue Router 路由
+  - Pinia 状态管理
+  - API 服务封装
+  - 认证存储 (auth.ts)
+  - 骑行数据存储 (rides.ts)
+  - 导航组件 (Navbar.vue)
+  - 登录页面 (LoginView.vue)
+  - 数据看板 (DashboardView.vue)
+  - 骑行列表 (RidesView.vue)
+  - 骑行详情 (RideDetailView.vue)
+  - 统计页面 (StatsView.vue)
+
+**进行中**:
+- 无
+
+**阻塞问题**:
+- 无
+
+**下一步**:
+- 继续M5功能开发
+
+---
 
 ### Session 3 - 2026-03-06 (续8)
 

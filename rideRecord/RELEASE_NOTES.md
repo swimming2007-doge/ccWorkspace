@@ -121,6 +121,20 @@
   - 个人记录
   - 统计界面组件 (StatsComponents.ets)
   - 统计页面 (StatsPage.ets)
+- **F020 Web端数据看板** (Web)
+  - Vue 3 + TypeScript + Vite 项目骨架
+  - TailwindCSS 样式配置
+  - Vue Router 路由
+  - Pinia 状态管理
+  - API 服务封装
+  - 认证存储
+  - 骑行数据存储
+  - 导航组件
+  - 登录页面
+  - 数据看板页面
+  - 骑行列表页面
+  - 骑行详情页面
+  - 统计分析页面
 
 #### 技术架构
 - 采用轻量化单体架构
