@@ -112,6 +112,15 @@
   - 隐私设置 (位置分享、心率分享、公开资料)
   - 设置界面组件 (SettingsComponents.ets)
   - 设置页面 (SettingsPage.ets)
+- **F019 统计分析模块** (手机)
+  - 统计服务 (StatsService.ets)
+  - 日/周/月/年统计
+  - 趋势分析
+  - 心率区间分布
+  - 热量消耗计算
+  - 个人记录
+  - 统计界面组件 (StatsComponents.ets)
+  - 统计页面 (StatsPage.ets)
 
 #### 技术架构
 - 采用轻量化单体架构
