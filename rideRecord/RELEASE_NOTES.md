@@ -113,6 +113,14 @@
   - 路况预警组件 (RoadWarningComponent.ets)
   - 冒险指数指示器 (AdventureIndexIndicator.ets)
   - 路况预警提示功能
+- **F017 冒险指数计算** (手机)
+  - 冒险指数计算服务 (RiskIndexService.ets)
+  - 6因素评估模型 (路面、坡度、交通、信号、补给、天气)
+  - 高程数据服务 (ElevationService.ets)
+  - 天气数据服务 (WeatherService.ets)
+  - 信号覆盖服务 (SignalCoverageService.ets)
+  - 实时风险等级评估
+  - 安全建议生成
 - **F023 用户设置模块** (手机)
   - 设置服务 (SettingsService.ets)
   - 骑行偏好设置 (导航模式、单位制、语音等)
