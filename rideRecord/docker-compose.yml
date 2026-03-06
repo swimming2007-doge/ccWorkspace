@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # API Server
+  # ===========================================
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: riderecord/api:latest
+    container_name: riderecord-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=file:/app/data/ride-record.db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=2h
+      - JWT_REFRESH_EXPIRES_IN=30d
+      - OBS_ACCESS_KEY=${OBS_ACCESS_KEY}
+      - OBS_SECRET_KEY=${OBS_SECRET_KEY}
+      - OBS_BUCKET=${OBS_BUCKET}
+      - OBS_REGION=${OBS_REGION}
+      - OBS_ENDPOINT=${OBS_ENDPOINT}
+      - AMAP_API_KEY=${AMAP_API_KEY}
+      - HUAWEI_APP_ID=${HUAWEI_APP_ID}
+      - HUAWEI_APP_SECRET=${HUAWEI_APP_SECRET}
+      - WECHAT_APP_ID=${WECHAT_APP_ID}
+      - WECHAT_APP_SECRET=${WECHAT_APP_SECRET}
+      - STRAVA_CLIENT_ID=${STRAVA_CLIENT_ID}
+      - STRAVA_CLIENT_SECRET=${STRAVA_CLIENT_SECRET}
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - LOG_LEVEL=info
+    volumes:
+      - ride-record-data:/app/data
+      - ride-record-logs:/app/logs
+      - ride-record-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ride-record-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================
+  # Nginx Reverse Proxy
+  # ===========================================
+  nginx:
+    image: nginx:alpine
+    container_name: riderecord-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ride-record-web:/usr/share/nginx/html:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - ride-record-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ===========================================
+  # Web Frontend (Optional - for building)
+  # ===========================================
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: riderecord/web:latest
+    container_name: riderecord-web
+    restart: "no"
+    volumes:
+      - ride-record-web:/app/dist
+    profiles:
+      - web
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  ride-record-network:
+    driver: bridge
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  ride-record-data:
+    name: riderecord-data
+  ride-record-logs:
+    name: riderecord-logs
+  ride-record-uploads:
+    name: riderecord-uploads
+  ride-record-web:
+    name: riderecord-web

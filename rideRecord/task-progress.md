@@ -9,14 +9,14 @@
 ## Current State
 
 **当前里程碑**: M1 - Foundation
-**当前任务**: F003-Docker - Docker容器化部署
-**状态**: 🔄 进行中
+**当前任务**: M1 完成，进入 M2 - MVP Core
+**状态**: ✅ M1 完成
 
 ### 完成情况
 
 | 里程碑 | 状态 | 完成率 |
 |--------|------|--------|
-| M1 - Foundation | 🔄 进行中 | 75% |
+| M1 - Foundation | ✅ 完成 | 100% |
 | M2 - MVP Core | ⏳ 待开始 | 0% |
 | M3 - MVP Navigation & Sync | ⏳ 待开始 | 0% |
 | M4 - MVP Release | ⏳ 待开始 | 0% |
@@ -30,7 +30,7 @@
 | F001 | 项目骨架与配置 | P0 | ✅ 完成 |
 | F002 | 数据库Schema设计 | P0 | ✅ 完成 |
 | F003 | 服务端API骨架 | P0 | ✅ 完成 |
-| F003-Docker | Docker容器化部署 | P0 | ⏳ 待开始 |
+| F003-Docker | Docker容器化部署 | P0 | ✅ 完成 |
 | F003 | 服务端API骨架 | P0 | ⏳ 待开始 |
 | F004 | 动作检测核心算法 | P0 | ⏳ 待开始 |
 | F005 | 手表端骑行界面 | P0 | ⏳ 待开始 |

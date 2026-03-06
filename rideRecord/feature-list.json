@@ -215,7 +215,7 @@
         "数据持久化正常",
         "支持多架构 (amd64/arm64)"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F004",
