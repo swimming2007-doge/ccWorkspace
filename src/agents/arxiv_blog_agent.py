@@ -1,14 +1,7 @@
 """
 ArXiv Blog Agent - 主 Agent 类
 
-功能：
-- 协调各 Skill 完成论文爬取、内容生成、博客发布
-- 状态管理和错误处理
-- 支持公网/内网环境
-
-使用方法：
-    agent = ArXivBlogAgent()
-    result = agent.run()
+使用集中式配置文件 (config.yaml)
 """
 
 import os
@@ -19,8 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Dict, Any
 
-import yaml
-
+from utils.config_loader import load_config, Config, get_config_dict
 from skills.arxiv_scraper import ArXivScraperSkill, ArXivPaper, ScraperResult
 from skills.content_generator import ContentGeneratorSkill, BlogContent, GeneratorResult
 from skills.blog_poster import BlogPosterSkill, MockBlogPosterSkill, PostResult
@@ -61,19 +53,6 @@ class AgentStatus:
 
 
 @dataclass
-class AgentConfig:
-    """Agent 配置"""
-    arxiv_query: str = "large model training inference"
-    arxiv_max_results: int = 10
-    content_style: str = "professional"
-    content_language: str = "zh"
-    title_prefix: str = "ArXiv 大模型训推进展 - "
-    blog_status: str = "publish"
-    dry_run: bool = False
-    log_level: str = "INFO"
-
-
-@dataclass
 class AgentResult:
     """Agent 执行结果"""
     success: bool
@@ -97,26 +76,26 @@ class ArXivBlogAgent:
     """
     ArXiv Blog Agent
 
-    自动化工作流：
-    1. 爬取 ArXiv 论文
-    2. 生成博客文案
-    3. 发布到 WordPress
+    使用集中式配置文件 (config.yaml)
     """
 
-    DEFAULT_CONFIG_PATH = "configs/config.yaml"
+    DEFAULT_CONFIG_PATH = "config.yaml"
 
-    def __init__(self, config_path: str = None, config: Dict = None,
-                 dry_run: bool = False):
+    def __init__(self, config_path: str = None, dry_run: bool = False):
         """
         初始化 Agent
 
         Args:
-            config_path: 配置文件路径
-            config: 配置字典（优先级高于配置文件）
-            dry_run: 干运行模式（不实际发布）
+            config_path: 配置文件路径（默认 config.yaml）
+            dry_run: 干运行模式（覆盖配置文件设置）
         """
-        self.config = self._load_config(config_path, config)
-        self.config.dry_run = dry_run
+        # 加载配置
+        self.config_path = config_path or self.DEFAULT_CONFIG_PATH
+        self.config: Config = load_config(self.config_path)
+
+        # 覆盖干运行模式
+        if dry_run:
+            self.config.agent.dry_run = True
 
         self.status = AgentStatus()
         self.skills: Dict[str, Any] = {}
@@ -124,75 +103,46 @@ class ArXivBlogAgent:
         self._setup_logger()
         self._register_skills()
 
-    def _load_config(self, config_path: str = None,
-                     config_dict: Dict = None) -> AgentConfig:
-        """加载配置"""
-        # 从配置文件加载
-        config_data = {}
-
-        path = config_path or self.DEFAULT_CONFIG_PATH
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    config_data = yaml.safe_load(f) or {}
-            except Exception:
-                pass
-
-        # 从字典覆盖
-        if config_dict:
-            config_data.update(config_dict)
-
-        # 提取 Agent 配置
-        agent_config = config_data.get("agent", {})
-
-        return AgentConfig(
-            arxiv_query=agent_config.get("arxiv_query", "large model training inference"),
-            arxiv_max_results=agent_config.get("arxiv_max_results", 10),
-            content_style=agent_config.get("content_style", "professional"),
-            content_language=agent_config.get("content_language", "zh"),
-            title_prefix=agent_config.get("title_prefix", "ArXiv 大模型训推进展 - "),
-            blog_status=agent_config.get("blog_status", "publish"),
-            dry_run=agent_config.get("dry_run", False),
-            log_level=agent_config.get("log_level", "INFO"),
-        )
-
     def _setup_logger(self):
         """设置日志"""
         self.logger = logging.getLogger("arxiv_blog_agent")
-        self.logger.setLevel(getattr(logging, self.config.log_level, logging.INFO))
+        self.logger.setLevel(getattr(logging, self.config.logging.level, logging.INFO))
 
         if not self.logger.handlers:
+            # 控制台处理器
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "[%(asctime)s] %(levelname)s [%(name)s] %(message)s"
-            )
+            formatter = logging.Formatter(self.config.logging.format)
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
     def _register_skills(self):
         """注册技能"""
-        self.skills["arxiv_scraper"] = ArXivScraperSkill()
-        self.skills["content_generator"] = ContentGeneratorSkill()
-        self.skills["blog_poster"] = BlogPosterSkill()
-        self.skills["mock_blog_poster"] = MockBlogPosterSkill()
+        # 获取配置字典
+        config_dict = get_config_dict(self.config)
+
+        # 注册各 Skill
+        self.skills["arxiv_scraper"] = ArXivScraperSkill(config_dict["arxiv"])
+        self.skills["content_generator"] = ContentGeneratorSkill(config_dict["content"])
+        self.skills["blog_poster"] = BlogPosterSkill(config_dict["blog"])
+        self.skills["mock_blog_poster"] = MockBlogPosterSkill(config_dict["blog"])
 
     def _step_scrape(self) -> ScraperResult:
         """Step 1: 爬取论文"""
         self.status.state = AgentState.SCRAPING
         self.status.current_step = "scrape"
         self.logger.info("=" * 50)
-        self.logger.info("Step 1: 开始爬取 ArXiv 论文...")
+        self.logger.info("Step 1: Crawling ArXiv papers...")
 
         result = self.skills["arxiv_scraper"].execute(
-            query=self.config.arxiv_query,
-            max_results=self.config.arxiv_max_results,
+            query=self.config.arxiv.query,
+            max_results=self.config.arxiv.max_results,
         )
 
         if result.success:
             self.status.papers_count = len(result.papers)
-            self.logger.info(f"爬取完成，获取 {len(result.papers)} 篇论文")
+            self.logger.info(f"Crawled {len(result.papers)} papers")
         else:
-            self.logger.error(f"爬取失败: {result.error_message}")
+            self.logger.error(f"Crawl failed: {result.error_message}")
 
         return result
 
@@ -201,22 +151,22 @@ class ArXivBlogAgent:
         self.status.state = AgentState.GENERATING
         self.status.current_step = "generate"
         self.logger.info("-" * 50)
-        self.logger.info("Step 2: 开始生成博客文案...")
+        self.logger.info("Step 2: Generating blog content...")
 
         if not papers:
-            return GeneratorResult(success=False, error_message="论文列表为空")
+            return GeneratorResult(success=False, error_message="No papers to generate")
 
         result = self.skills["content_generator"].execute(
             papers=papers,
-            style=self.config.content_style,
-            language=self.config.content_language,
-            title_prefix=self.config.title_prefix,
+            style=self.config.content.style,
+            language=self.config.content.language,
+            title_prefix=self.config.content.title_prefix,
         )
 
         if result.success:
-            self.logger.info("文案生成完成")
+            self.logger.info("Content generated")
         else:
-            self.logger.error(f"生成失败: {result.error_message}")
+            self.logger.error(f"Generation failed: {result.error_message}")
 
         return result
 
@@ -225,22 +175,22 @@ class ArXivBlogAgent:
         self.status.state = AgentState.POSTING
         self.status.current_step = "post"
         self.logger.info("-" * 50)
-        self.logger.info("Step 3: 开始发布博客...")
+        self.logger.info("Step 3: Posting blog...")
 
-        if self.config.dry_run:
-            self.logger.info("干运行模式，使用模拟发布")
+        if self.config.agent.dry_run:
+            self.logger.info("Dry run mode, using mock poster")
             result = self.skills["mock_blog_poster"].execute(blog_content)
         else:
             result = self.skills["blog_poster"].execute(
                 blog_content=blog_content,
-                status=self.config.blog_status,
+                status=self.config.blog.status,
             )
 
         if result.success:
             self.status.post_url = result.post_url
-            self.logger.info(f"发布成功: {result.post_url}")
+            self.logger.info(f"Posted: {result.post_url}")
         else:
-            self.logger.error(f"发布失败: {result.error_message}")
+            self.logger.error(f"Post failed: {result.error_message}")
 
         return result
 
@@ -255,10 +205,11 @@ class ArXivBlogAgent:
         self.status.state = AgentState.INITIALIZING
 
         self.logger.info("=" * 50)
-        self.logger.info("ArXiv Blog Agent 启动")
-        self.logger.info(f"搜索关键词: {self.config.arxiv_query}")
-        self.logger.info(f"最大结果数: {self.config.arxiv_max_results}")
-        self.logger.info(f"干运行模式: {self.config.dry_run}")
+        self.logger.info("ArXiv Blog Agent Started")
+        self.logger.info(f"Query: {self.config.arxiv.query}")
+        self.logger.info(f"Max results: {self.config.arxiv.max_results}")
+        self.logger.info(f"Dry run: {self.config.agent.dry_run}")
+        self.logger.info(f"Style: {self.config.content.style}")
         self.logger.info("=" * 50)
 
         try:
@@ -269,7 +220,7 @@ class ArXivBlogAgent:
                 self.status.end_time = datetime.now()
                 return AgentResult(
                     success=False,
-                    error_message=f"爬取失败: {scrape_result.error_message}",
+                    error_message=f"Crawl failed: {scrape_result.error_message}",
                     duration=(self.status.end_time - self.status.start_time).total_seconds(),
                 )
 
@@ -281,7 +232,7 @@ class ArXivBlogAgent:
                 return AgentResult(
                     success=False,
                     papers=scrape_result.papers,
-                    error_message=f"生成失败: {generate_result.error_message}",
+                    error_message=f"Generation failed: {generate_result.error_message}",
                     duration=(self.status.end_time - self.status.start_time).total_seconds(),
                 )
 
@@ -294,7 +245,7 @@ class ArXivBlogAgent:
                     success=False,
                     papers=scrape_result.papers,
                     blog_content=generate_result.blog_content,
-                    error_message=f"发布失败: {post_result.error_message}",
+                    error_message=f"Post failed: {post_result.error_message}",
                     duration=(self.status.end_time - self.status.start_time).total_seconds(),
                 )
 
@@ -303,10 +254,10 @@ class ArXivBlogAgent:
             self.status.end_time = datetime.now()
 
             self.logger.info("=" * 50)
-            self.logger.info("工作流执行成功!")
-            self.logger.info(f"处理论文数: {len(scrape_result.papers)}")
-            self.logger.info(f"发布地址: {post_result.post_url}")
-            self.logger.info(f"执行时间: {(self.status.end_time - self.status.start_time).total_seconds():.2f}s")
+            self.logger.info("Workflow completed!")
+            self.logger.info(f"Papers: {len(scrape_result.papers)}")
+            self.logger.info(f"Post URL: {post_result.post_url}")
+            self.logger.info(f"Duration: {(self.status.end_time - self.status.start_time).total_seconds():.2f}s")
             self.logger.info("=" * 50)
 
             return AgentResult(
@@ -320,7 +271,7 @@ class ArXivBlogAgent:
         except Exception as e:
             self.status.state = AgentState.FAILED
             self.status.end_time = datetime.now()
-            self.logger.exception("工作流执行异常")
+            self.logger.exception("Workflow exception")
             return AgentResult(
                 success=False,
                 error_message=str(e),
@@ -330,6 +281,10 @@ class ArXivBlogAgent:
     def get_status(self) -> Dict[str, Any]:
         """获取当前状态"""
         return self.status.to_dict()
+
+    def get_config(self) -> Dict[str, Any]:
+        """获取当前配置"""
+        return get_config_dict(self.config)
 
     def close(self):
         """清理资源"""
@@ -343,30 +298,29 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="ArXiv Blog Agent")
-    parser.add_argument("--config", "-c", help="配置文件路径")
-    parser.add_argument("--dry-run", "-d", action="store_true", help="干运行模式")
-    parser.add_argument("--query", "-q", help="搜索关键词")
-    parser.add_argument("--max-results", "-m", type=int, help="最大结果数")
+    parser.add_argument("--config", "-c", default="config.yaml", help="Config file path")
+    parser.add_argument("--dry-run", "-d", action="store_true", help="Dry run mode")
+    parser.add_argument("--query", "-q", help="Search query")
+    parser.add_argument("--max-results", "-m", type=int, help="Max results")
 
     args = parser.parse_args()
 
-    config_override = {}
-    if args.query:
-        config_override["arxiv_query"] = args.query
-    if args.max_results:
-        config_override["arxiv_max_results"] = args.max_results
-
     agent = ArXivBlogAgent(
         config_path=args.config,
-        config=config_override if config_override else None,
         dry_run=args.dry_run,
     )
+
+    # 命令行参数覆盖
+    if args.query:
+        agent.config.arxiv.query = args.query
+    if args.max_results:
+        agent.config.arxiv.max_results = args.max_results
 
     result = agent.run()
     agent.close()
 
     print("\n" + "=" * 50)
-    print("执行结果:")
+    print("Result:")
     print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
 
     return 0 if result.success else 1

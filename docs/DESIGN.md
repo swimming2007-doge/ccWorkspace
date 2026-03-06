@@ -1,0 +1,430 @@
+# Design Document
+
+## ArXiv Blog Agent
+
+**版本**: 1.0.0
+**日期**: 2026-03-06
+
+---
+
+## 1. 系统架构
+
+### 1.1 架构概览
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLI / Main Entry                         │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+┌─────────────────────────────▼───────────────────────────────────┐
+│                      Agent Layer                                │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  ArXivBlogAgent                                          │   │
+│  │  - 状态管理 (AgentStatus)                                │   │
+│  │  - 配置管理 (AgentConfig)                                │   │
+│  │  - 工作流编排 (run, _step_*)                             │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+┌─────────────────────────────▼───────────────────────────────────┐
+│                      Skill Layer                                │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐           │
+│  │ArXivScraper  │ │ContentGen   │ │BlogPoster   │           │
+│  │Skill         │ │eratorSkill  │ │Skill        │           │
+│  └──────────────┘ └──────────────┘ └──────────────┘           │
+│  ┌──────────────┐                                              │
+│  │NetworkAdapter│                                              │
+│  │Skill         │                                              │
+│  └──────────────┘                                              │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+┌─────────────────────────────▼───────────────────────────────────┐
+│                      Utility Layer                              │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐           │
+│  │HttpClient    │ │Logger        │ │Validator     │           │
+│  └──────────────┘ └──────────────┘ └──────────────┘           │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+┌─────────────────────────────▼───────────────────────────────────┐
+│                    External Services                            │
+│  ┌──────────────┐ ┌──────────────┐                             │
+│  │ArXiv API     │ │WordPress API │                             │
+│  └──────────────┘ └──────────────┘                             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 1.2 设计原则
+
+1. **技能解耦**: 每个 Skill 独立封装，可单独测试和替换
+2. **配置驱动**: 所有参数通过配置文件控制
+3. **容错设计**: 单个 Skill 失败不影响整体流程
+4. **可观测性**: 完整的日志和状态追踪
+
+---
+
+## 2. 模块设计
+
+### 2.1 Agent 模块
+
+**职责**: 协调各 Skill 完成工作流
+
+**类设计**:
+```python
+class ArXivBlogAgent:
+    - config: AgentConfig        # 配置
+    - status: AgentStatus        # 状态
+    - skills: Dict[str, Skill]   # 技能注册表
+
+    + __init__(config_path, dry_run)
+    + run() -> AgentResult
+    + get_status() -> Dict
+    + close()
+```
+
+**状态机**:
+```
+IDLE -> INITIALIZING -> SCRAPING -> GENERATING -> POSTING -> COMPLETED
+  |         |            |            |            |
+  └─────────┴────────────┴────────────┴────────────┴-> FAILED
+```
+
+### 2.2 Skill 模块
+
+#### 2.2.1 ArXivScraperSkill
+
+**职责**: 通过 ArXiv API 爬取论文
+
+**类设计**:
+```python
+class ArXivScraperSkill:
+    - config: Dict
+    - _session: requests.Session
+
+    + execute(query, max_results) -> ScraperResult
+    + close()
+```
+
+**数据结构**:
+```python
+@dataclass
+class ArXivPaper:
+    title: str
+    authors: List[str]
+    abstract: str
+    arxiv_id: str
+    url: str
+    pdf_url: str
+    submitted_date: str
+    categories: List[str]
+```
+
+#### 2.2.2 ContentGeneratorSkill
+
+**职责**: 生成博客文案
+
+**类设计**:
+```python
+class ContentGeneratorSkill:
+    - config: Dict
+    - STYLE_TEMPLATES: Dict
+
+    + execute(papers, style) -> GeneratorResult
+```
+
+**支持风格**:
+- `professional`: 专业风格
+- `casual`: 轻松风格
+- `academic`: 学术风格
+
+#### 2.2.3 BlogPosterSkill
+
+**职责**: 发布博客到 WordPress
+
+**类设计**:
+```python
+class BlogPosterSkill:
+    - config: Dict
+    - _session: requests.Session
+
+    + execute(blog_content, status) -> PostResult
+    + test_connection() -> Dict
+    + close()
+```
+
+#### 2.2.4 NetworkAdapterSkill
+
+**职责**: HTTP 客户端封装
+
+**类设计**:
+```python
+class NetworkAdapter:
+    - config: NetworkConfig
+    - _session: requests.Session
+
+    + request(method, url, **kwargs) -> Response
+    + get/post/put/delete(url, **kwargs)
+    + test_connectivity(url) -> Dict
+    + close()
+```
+
+### 2.3 Utility 模块
+
+#### 2.3.1 HttpClient
+
+统一 HTTP 客户端，支持代理、SSL、重试
+
+#### 2.3.2 Logger
+
+日志管理，支持控制台和文件输出
+
+#### 2.3.3 Validator
+
+数据校验工具
+
+---
+
+## 3. 配置设计
+
+### 3.1 单一配置文件结构
+
+```yaml
+# config.yaml - 集中式配置文件
+
+# ============================================================
+# ArXiv 爬取配置
+# ============================================================
+arxiv:
+  query: "large model training inference"
+  max_results: 10
+  timeout: 30
+  max_retries: 3
+  retry_delay: 3
+  proxy: null                    # 内网时配置，如 "http://proxy:8080"
+  ssl_verify: true               # 内网自签名证书时设为 false
+
+# ============================================================
+# 内容生成配置
+# ============================================================
+content:
+  style: "professional"          # professional / casual / academic
+  language: "zh"
+  title_prefix: "ArXiv 大模型训推进展 - "
+  category: "AI/大模型"
+  max_abstract_length: 300
+  include_pdf_link: true
+
+# ============================================================
+# 博客发布配置
+# ============================================================
+blog:
+  api_base: "https://public-api.wordpress.com/rest/v1.1"
+  blog_id: "791025341"
+  blog_url: "https://swimming2007.wordpress.com/"
+  access_token: "${WORDPRESS_TOKEN}"   # 环境变量或直接配置
+  status: "publish"                     # publish / draft
+  timeout: 20
+  max_retries: 3
+  proxy: null
+  ssl_verify: true
+
+# ============================================================
+# 网络配置（全局默认）
+# ============================================================
+network:
+  timeout: 20
+  connect_timeout: 10
+  max_retries: 3
+  pool_connections: 10
+  proxy: null                    # 全局代理，被各模块覆盖
+  ssl_verify: true
+
+# ============================================================
+# 日志配置
+# ============================================================
+logging:
+  level: "INFO"                  # DEBUG / INFO / WARNING / ERROR
+  file: "./logs/agent.log"
+  format: "[%(asctime)s] %(levelname)s [%(name)s] %(message)s"
+
+# ============================================================
+# Agent 配置
+# ============================================================
+agent:
+  dry_run: false                 # 干运行模式
+```
+
+### 3.2 配置加载优先级
+
+1. 环境变量 (最高) - `${VAR_NAME}` 格式
+2. 命令行参数
+3. 配置文件
+4. 代码默认值 (最低)
+
+### 3.3 内网配置模板
+
+创建 `config.internal.yaml` 用于内网部署：
+
+```yaml
+arxiv:
+  proxy: "http://internal-proxy:8080"
+  ssl_verify: false
+
+blog:
+  api_base: "https://internal-blog/api/v1"
+  access_token: "${INTERNAL_BLOG_TOKEN}"
+  proxy: "http://internal-proxy:8080"
+  ssl_verify: false
+
+network:
+  proxy: "http://internal-proxy:8080"
+  ssl_verify: false
+```
+
+---
+
+## 4. 数据流设计
+
+### 4.1 主工作流数据流
+
+```
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│   Config    │      │   Agent     │      │   Result    │
+│  (YAML)     │─────▶│  Workflow   │─────▶│  (JSON)     │
+└─────────────┘      └──────┬──────┘      └─────────────┘
+                            │
+         ┌──────────────────┼──────────────────┐
+         ▼                  ▼                  ▼
+   ┌───────────┐     ┌───────────┐     ┌───────────┐
+   │  Scraper  │────▶│ Generator │────▶│  Poster   │
+   │  Skill    │     │  Skill    │     │  Skill    │
+   └───────────┘     └───────────┘     └───────────┘
+         │                  │                  │
+         ▼                  ▼                  ▼
+   ArXivPaper[]       BlogContent        PostResult
+```
+
+### 4.2 错误处理流
+
+```
+┌─────────────┐
+│  执行步骤   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐     Yes    ┌─────────────┐
+│  是否成功？ │───────────▶│  继续下一步  │
+└──────┬──────┘            └─────────────┘
+       │ No
+       ▼
+┌─────────────┐     Yes    ┌─────────────┐
+│  可重试？   │───────────▶│  重试执行   │
+└──────┬──────┘            └─────────────┘
+       │ No
+       ▼
+┌─────────────┐
+│  返回错误   │
+└─────────────┘
+```
+
+---
+
+## 5. 接口设计
+
+### 5.1 命令行接口
+
+```bash
+# 基本运行
+python src/main.py
+
+# 干运行模式
+python src/main.py --dry-run
+
+# 自定义配置
+python src/main.py -c config.internal.yaml
+
+# 自定义搜索
+python src/main.py -q "transformer attention" -m 5
+
+# 详细日志
+python src/main.py -v
+```
+
+### 5.2 编程接口
+
+```python
+from src.agents.arxiv_blog_agent import ArXivBlogAgent
+
+# 使用默认配置
+agent = ArXivBlogAgent()
+result = agent.run()
+
+# 使用自定义配置
+agent = ArXivBlogAgent(config_path="config.yaml", dry_run=True)
+result = agent.run()
+
+# 获取状态
+status = agent.get_status()
+
+# 清理资源
+agent.close()
+```
+
+---
+
+## 6. 部署设计
+
+### 6.1 目录结构
+
+```
+arxiv_blog_agent/
+├── config.yaml              # 集中式配置文件
+├── src/                     # 源代码
+│   ├── agents/             # Agent 层
+│   ├── skills/             # Skill 层
+│   ├── utils/              # 工具层
+│   └── main.py             # 入口
+├── tests/                   # 测试
+├── logs/                    # 日志目录
+├── requirements.txt         # 依赖
+└── README.md               # 说明
+```
+
+### 6.2 环境变量
+
+| 变量名 | 说明 |
+|-------|------|
+| WORDPRESS_TOKEN | WordPress 访问令牌 |
+| HTTP_PROXY | HTTP 代理 |
+| HTTPS_PROXY | HTTPS 代理 |
+
+---
+
+## 7. 测试设计
+
+### 7.1 测试策略
+
+- **单元测试**: 每个 Skill 的独立测试
+- **集成测试**: Agent 工作流测试
+- **端到端测试**: 干运行模式完整测试
+
+### 7.2 测试覆盖目标
+
+- 核心代码覆盖率 > 80%
+- 所有公开方法有测试
+- 异常场景有覆盖
+
+---
+
+## 8. 安全设计
+
+### 8.1 敏感信息处理
+
+- 令牌通过环境变量配置
+- 日志中脱敏处理
+- 配置文件不提交敏感值
+
+### 8.2 网络安全
+
+- 支持 HTTPS
+- 支持 SSL 证书验证
+- 内网支持代理认证

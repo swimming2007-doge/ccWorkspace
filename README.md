@@ -2,182 +2,155 @@
 
 自动从 ArXiv 爬取大模型训练与推理相关论文，生成博客文案并发布到 WordPress。
 
-## 功能特性
-
-- **自动化工作流**：一键完成爬取→生成→发布全流程
-- **技能模块化**：每个功能独立封装，易于扩展和替换
-- **配置驱动**：通过配置文件控制所有行为
-- **内网支持**：预留内网扩展接口，支持代理和自定义证书
-
 ## 快速开始
 
-### 1. 安装依赖
-
 ```bash
+# 安装依赖
 pip install -r requirements.txt
-```
 
-### 2. 运行（干运行模式，不实际发布）
-
-```bash
+# 干运行模式（测试）
 python src/main.py --dry-run
-```
 
-### 3. 实际发布
-
-```bash
-# 修改 configs/config.yaml 中的 access_token 为真实令牌
+# 实际发布
 python src/main.py
 ```
 
-## 使用方法
+## 配置文件
 
-### 命令行参数
+**所有配置集中在一个文件：`config.yaml`**
 
 ```bash
-# 使用默认配置
-python src/main.py
+# 查看当前配置
+python src/main.py --show-config
 
-# 干运行模式（测试用）
-python src/main.py --dry-run
-
-# 自定义搜索关键词
-python src/main.py -q "transformer attention"
-
-# 限制最大结果数
-python src/main.py -m 5
-
-# 使用指定配置文件
-python src/main.py -c configs/prod_config.yaml
-
-# 显示详细日志
-python src/main.py -v
-
-# 输出结果到文件
-python src/main.py -o result.json
+# 使用自定义配置文件
+python src/main.py -c config.internal.yaml
 ```
 
-### 作为库使用
-
-```python
-from src.agents.arxiv_blog_agent import ArXivBlogAgent
-
-# 创建 Agent
-agent = ArXivBlogAgent(dry_run=True)
-
-# 执行工作流
-result = agent.run()
-
-if result.success:
-    print(f"发布成功: {result.post_url}")
-else:
-    print(f"执行失败: {result.error_message}")
-
-agent.close()
-```
-
-## 配置说明
-
-### 配置文件优先级
-
-1. 命令行参数（最高）
-2. 环境变量
-3. 配置文件
-4. 默认值（最低）
-
-### 主要配置项
+### 配置结构
 
 ```yaml
-# configs/config.yaml
+# ArXiv 爬取配置
+arxiv:
+  query: "large model training inference"
+  max_results: 10
+  timeout: 30
+  proxy: null           # 内网时配置
+  ssl_verify: true
+
+# 内容生成配置
+content:
+  style: "professional"  # professional / casual / academic
+  title_prefix: "ArXiv 大模型训推进展 - "
+
+# 博客发布配置
+blog:
+  blog_id: "791025341"
+  access_token: "${WORDPRESS_TOKEN}"  # 环境变量
+  status: "publish"
+
+# 网络配置
+network:
+  timeout: 20
+  proxy: null
+  ssl_verify: true
+
+# 日志配置
+logging:
+  level: "INFO"
+  file: "./logs/agent.log"
+
+# Agent 配置
 agent:
-  arxiv_query: "large model training inference"  # 搜索关键词
-  arxiv_max_results: 10                           # 最大结果数
-  content_style: "professional"                   # 写作风格
-  blog_status: "publish"                          # 发布状态
-
-blog_poster:
-  blog_id: "791025341"                           # 博客 ID
-  access_token: "YOUR_TOKEN"                     # 访问令牌
+  dry_run: false
 ```
 
-### 获取 WordPress 访问令牌
+## 命令行参数
 
-1. 访问 [WordPress.com Developer](https://developer.wordpress.com/apps/)
-2. 创建新应用
-3. 使用 OAuth2 流程获取访问令牌
+```bash
+python src/main.py [OPTIONS]
 
-## 项目结构
-
-```
-arxiv_blog_agent/
-├── docs/                    # 文档
-│   ├── plan/               # 规划文档
-│   ├── skill/              # Skill 定义文档
-│   └── agent/              # Agent 文档
-├── src/                    # 源代码
-│   ├── agents/             # Agent 实现
-│   ├── skills/             # Skill 实现
-│   ├── utils/              # 工具类
-│   └── main.py             # 入口文件
-├── tests/                  # 测试用例
-├── configs/                # 配置文件
-├── logs/                   # 日志目录
-├── requirements.txt        # 依赖清单
-└── README.md               # 说明文档
+Options:
+  -c, --config FILE      配置文件路径 (默认: config.yaml)
+  -d, --dry-run          干运行模式
+  -q, --query TEXT       搜索关键词
+  -m, --max-results N    最大结果数
+  -s, --style STYLE      写作风格
+  -o, --output FILE      输出结果到文件
+  --show-config          显示当前配置
+  -v, --verbose          详细日志
 ```
 
 ## 内网部署
 
-### 1. 修改配置文件
-
+1. 复制配置文件：
 ```bash
-# 复制生产配置模板
-cp configs/prod_config.yaml configs/internal.yaml
-
-# 编辑配置
-vim configs/internal.yaml
+cp config.yaml config.internal.yaml
 ```
 
-### 2. 配置代理
-
+2. 修改配置：
 ```yaml
+arxiv:
+  proxy: "http://internal-proxy:8080"
+  ssl_verify: false
+
+blog:
+  api_base: "https://internal-blog/api/v1"
+  access_token: "${INTERNAL_BLOG_TOKEN}"
+  proxy: "http://internal-proxy:8080"
+  ssl_verify: false
+
 network:
   proxy: "http://internal-proxy:8080"
   ssl_verify: false
 ```
 
-### 3. 配置内网博客平台
-
-```yaml
-blog_poster:
-  api_base: "https://internal-blog/api/v1"
-  access_token: "${INTERNAL_BLOG_TOKEN}"
-```
-
-### 4. 运行
-
+3. 设置环境变量：
 ```bash
-python src/main.py -c configs/internal.yaml
+export INTERNAL_BLOG_TOKEN="your_token"
 ```
 
-## 测试
-
+4. 运行：
 ```bash
-# 运行所有测试
-pytest tests/
-
-# 运行指定测试
-pytest tests/test_skills/test_arxiv_scraper.py
-
-# 生成覆盖率报告
-pytest --cov=src tests/
+python src/main.py -c config.internal.yaml
 ```
 
-## 注意事项
+## 项目结构
 
-1. **默认令牌仅供测试**：实际发布前需替换为真实令牌
-2. **内网部署**：修改 `prod_config.yaml` 中的网络和认证配置
-3. **日志位置**：默认保存在 `./logs/agent.log`
+```
+arxiv_blog_agent/
+├── config.yaml              # 集中式配置文件 ★
+├── docs/                    # 文档
+│   ├── SRS.md              # 需求规格说明
+│   ├── DESIGN.md           # 设计文档
+│   └── ...                 # 其他文档
+├── src/                    # 源代码
+│   ├── agents/             # Agent 层
+│   ├── skills/             # Skill 层
+│   ├── utils/              # 工具层
+│   └── main.py             # 入口
+├── tests/                   # 测试
+├── logs/                    # 日志
+├── feature-list.json        # 功能列表
+├── requirements.txt         # 依赖
+└── README.md               # 说明
+```
+
+## 需要配置的项目
+
+| 配置项 | 说明 | 默认值 | 是否需要修改 |
+|-------|------|--------|-------------|
+| `arxiv.query` | 搜索关键词 | "large model training inference" | 可选 |
+| `arxiv.max_results` | 最大结果数 | 10 | 可选 |
+| `arxiv.proxy` | 代理地址 | null | 内网必须 |
+| `arxiv.ssl_verify` | SSL验证 | true | 内网可能需要 |
+| `content.style` | 写作风格 | professional | 可选 |
+| `blog.blog_id` | 博客ID | 791025341 | 实际发布时 |
+| `blog.access_token` | 访问令牌 | 测试令牌 | **实际发布必须** |
+| `blog.status` | 发布状态 | publish | 可选 |
+| `network.proxy` | 全局代理 | null | 内网必须 |
+| `network.ssl_verify` | SSL验证 | true | 内网可能需要 |
+| `agent.dry_run` | 干运行 | false | 可选 |
 
 ## License
 

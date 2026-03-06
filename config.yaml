@@ -1,0 +1,182 @@
+# =============================================================================
+# ArXiv Blog Agent - 集中式配置文件
+# =============================================================================
+#
+# 说明：
+# 1. 这是唯一的配置文件，包含所有模块的配置
+# 2. 支持环境变量覆盖，格式：${ENV_VAR_NAME}
+# 3. 默认值已设置，无需修改即可运行（干运行模式）
+#
+# 使用方法：
+#   python src/main.py -c config.yaml
+#
+# 内网部署：
+#   复制此文件为 config.internal.yaml，修改相关配置项
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# ArXiv 爬取配置
+# -----------------------------------------------------------------------------
+arxiv:
+  # 搜索配置
+  query: "large model training inference"
+  max_results: 10
+
+  # API 配置
+  api_url: "https://export.arxiv.org/api/query"
+
+  # 网络配置
+  timeout: 30
+  max_retries: 3
+  retry_delay: 3
+
+  # 代理配置（内网时设置）
+  proxy: null                    # 示例: "http://proxy.internal.corp:8080"
+
+  # SSL 配置
+  ssl_verify: true               # 内网自签名证书时设为 false
+
+# -----------------------------------------------------------------------------
+# 内容生成配置
+# -----------------------------------------------------------------------------
+content:
+  # 写作风格: professional / casual / academic
+  style: "professional"
+
+  # 语言
+  language: "zh"
+
+  # 标题配置
+  title_prefix: "ArXiv 大模型训推进展 - "
+
+  # 分类配置
+  category: "AI/大模型"
+
+  # 摘要配置
+  max_abstract_length: 300
+
+  # 是否包含 PDF 链接
+  include_pdf_link: true
+
+# -----------------------------------------------------------------------------
+# 博客发布配置
+# -----------------------------------------------------------------------------
+blog:
+  # WordPress API 配置
+  api_base: "https://public-api.wordpress.com/rest/v1.1"
+  blog_id: "791025341"
+  blog_url: "https://swimming2007.wordpress.com/"
+
+  # 认证配置
+  # 重要：实际发布时请替换为真实令牌
+  # 获取方式：https://developer.wordpress.com/docs/oauth2/
+  # 建议使用环境变量：${WORDPRESS_TOKEN}
+  access_token: "NzkxMDI1MzQxJTNBYXp4cCUyMGY0ZHYlMjB5c2tzJTIweWJxdiUyMA=="
+
+  # 发布配置
+  status: "publish"              # publish / draft / private
+
+  # 网络配置
+  timeout: 20
+  max_retries: 3
+  retry_delay: 2
+
+  # 代理配置（内网时设置）
+  proxy: null
+
+  # SSL 配置
+  ssl_verify: true
+
+# -----------------------------------------------------------------------------
+# 网络配置（全局默认值，可被各模块覆盖）
+# -----------------------------------------------------------------------------
+network:
+  # 超时配置
+  timeout: 20
+  connect_timeout: 10
+  read_timeout: 20
+
+  # 重试配置
+  max_retries: 3
+  retry_delay: 1.0
+
+  # 连接池配置
+  pool_connections: 10
+  pool_maxsize: 10
+
+  # 代理配置（全局代理）
+  proxy: null                    # 示例: "http://proxy:8080"
+  proxy_http: null               # HTTP 专用代理
+  proxy_https: null              # HTTPS 专用代理
+
+  # SSL 配置
+  ssl_verify: true
+
+  # User-Agent
+  user_agent: "ArXiv-Blog-Agent/1.0"
+
+# -----------------------------------------------------------------------------
+# 日志配置
+# -----------------------------------------------------------------------------
+logging:
+  # 日志级别: DEBUG / INFO / WARNING / ERROR
+  level: "INFO"
+
+  # 日志文件
+  file: "./logs/agent.log"
+
+  # 日志格式
+  format: "[%(asctime)s] %(levelname)s [%(name)s] %(message)s"
+
+  # 控制台输出级别
+  console_level: "INFO"
+
+  # 文件输出级别
+  file_level: "DEBUG"
+
+# -----------------------------------------------------------------------------
+# Agent 配置
+# -----------------------------------------------------------------------------
+agent:
+  # 干运行模式（不实际发布）
+  dry_run: false
+
+  # 状态检查点文件
+  checkpoint_file: "./logs/checkpoint.json"
+
+# =============================================================================
+# 内网部署配置指南
+# =============================================================================
+#
+# 1. 复制此文件：
+#    cp config.yaml config.internal.yaml
+#
+# 2. 修改以下配置项：
+#
+#    arxiv:
+#      proxy: "http://internal-proxy:8080"
+#      ssl_verify: false
+#      # 如果有 ArXiv 内网镜像：
+#      # api_url: "https://arxiv-mirror.internal.corp/api/query"
+#
+#    blog:
+#      # 修改为内网博客平台
+#      api_base: "https://internal-blog.internal.corp/api/v1"
+#      blog_id: "${INTERNAL_BLOG_ID}"
+#      access_token: "${INTERNAL_BLOG_TOKEN}"
+#      proxy: "http://internal-proxy:8080"
+#      ssl_verify: false
+#
+#    network:
+#      proxy: "http://internal-proxy:8080"
+#      ssl_verify: false
+#
+# 3. 设置环境变量：
+#    export INTERNAL_BLOG_ID="your_blog_id"
+#    export INTERNAL_BLOG_TOKEN="your_token"
+#
+# 4. 运行：
+#    python src/main.py -c config.internal.yaml
+#
+# =============================================================================
