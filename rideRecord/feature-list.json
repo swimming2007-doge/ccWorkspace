@@ -27,7 +27,9 @@
         "database": "SQLite 3 (better-sqlite3)",
         "orm": "Prisma",
         "storage": "华为云OBS SDK",
-        "auth": "JWT"
+        "auth": "JWT",
+        "container": "Docker",
+        "base_image": "node:20-alpine"
       },
       "web": {
         "framework": "Vue 3 + TypeScript",
@@ -53,12 +55,14 @@
     {
       "id": "M1",
       "name": "Foundation",
-      "description": "项目骨架、CI配置、核心抽象层",
+      "description": "项目骨架、CI配置、核心抽象层、Docker容器化",
       "exit_criteria": [
         "所有项目目录创建完成",
         "基础配置文件就绪",
         "共享类型定义完成",
-        "数据库Schema设计完成"
+        "数据库Schema设计完成",
+        "Docker镜像构建成功",
+        "docker-compose部署正常"
       ]
     },
     {
@@ -182,6 +186,34 @@
         "服务可启动",
         "健康检查接口正常",
         "Swagger文档可访问"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "F003-Docker",
+      "name": "Docker容器化部署",
+      "description": "构建服务端Docker镜像，支持容器化部署",
+      "priority": "P0",
+      "milestone": "M1",
+      "type": "devops",
+      "platforms": ["server"],
+      "dependencies": ["F003"],
+      "tasks": [
+        "创建多阶段Dockerfile (node:20-alpine)",
+        "创建docker-compose.yml配置",
+        "创建.dockerignore文件",
+        "配置数据卷持久化 (data, logs, uploads)",
+        "创建健康检查端点 /health",
+        "创建Nginx反向代理配置",
+        "编写GitHub Actions自动构建流程",
+        "编写Docker部署文档"
+      ],
+      "acceptance_criteria": [
+        "docker-compose up 成功启动",
+        "镜像大小 < 150MB",
+        "健康检查通过",
+        "数据持久化正常",
+        "支持多架构 (amd64/arm64)"
       ],
       "status": "pending"
     },

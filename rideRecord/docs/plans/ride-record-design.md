@@ -1773,6 +1773,306 @@ Response:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### 7.3 Docker 容器化部署
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Docker 容器化部署方案                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   架构概览                                                       │
+│   ─────────────────────────────────────────────────────────    │
+│                                                                  │
+│   ┌─────────────────────────────────────────────────────────┐  │
+│   │                    Docker Host                          │  │
+│   │                                                         │  │
+│   │   ┌─────────────────────────────────────────────────┐  │  │
+│   │   │              nginx容器 (反向代理)               │  │  │
+│   │   │              端口: 80, 443                      │  │  │
+│   │   │              - SSL终止                          │  │  │
+│   │   │              - 静态文件服务                      │  │  │
+│   │   │              - 反向代理到API                     │  │  │
+│   │   └──────────────────────┬──────────────────────────┘  │  │
+│   │                          │                              │  │
+│   │                          ▼                              │  │
+│   │   ┌─────────────────────────────────────────────────┐  │  │
+│   │   │              ride-record-api 容器               │  │  │
+│   │   │              Node.js 20 LTS                     │  │  │
+│   │   │              端口: 3000                         │  │  │
+│   │   │                                                 │  │  │
+│   │   │   /app                                          │  │  │
+│   │   │   ├── /src          应用源码                   │  │  │
+│   │   │   ├── /data         SQLite数据库 (Volume)      │  │  │
+│   │   │   ├── /uploads      上传临时目录 (Volume)      │  │  │
+│   │   │   └── /logs         日志目录 (Volume)          │  │  │
+│   │   │                                                 │  │  │
+│   │   └─────────────────────────────────────────────────┘  │  │
+│   │                                                         │  │
+│   │   Volumes (数据持久化)                                  │  │
+│   │   ┌─────────────────────────────────────────────────┐  │  │
+│   │   │  ride-record-data  → /app/data                  │  │  │
+│   │   │  ride-record-logs  → /app/logs                  │  │  │
+│   │   │  ride-record-uploads → /app/uploads             │  │  │
+│   │   └─────────────────────────────────────────────────┘  │  │
+│   │                                                         │  │
+│   └─────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 7.3.1 Dockerfile 设计
+
+```dockerfile
+# ===========================================
+# 多阶段构建 - RideRecord API Server
+# ===========================================
+
+# 阶段1: 构建阶段
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 安装构建依赖
+COPY package*.json ./
+COPY prisma ./prisma/
+RUN npm ci --only=production
+
+# 复制源码并构建
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# 阶段2: 生产镜像
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# 安全: 使用非root用户
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 riderecord
+
+# 复制构建产物
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+
+# 创建数据目录
+RUN mkdir -p /app/data /app/uploads /app/logs
+RUN chown -R riderecord:nodejs /app
+
+# 切换用户
+USER riderecord
+
+# 环境变量
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+# 暴露端口
+EXPOSE 3000
+
+# 启动命令
+CMD ["node", "dist/index.js"]
+```
+
+#### 7.3.2 Docker Compose 配置
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # API 服务
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: riderecord/api:latest
+    container_name: riderecord-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/data/ride-record.db
+      - JWT_SECRET=${JWT_SECRET}
+      - OBS_ACCESS_KEY=${OBS_ACCESS_KEY}
+      - OBS_SECRET_KEY=${OBS_SECRET_KEY}
+      - OBS_BUCKET=${OBS_BUCKET}
+      - OBS_REGION=${OBS_REGION}
+      - AMAP_API_KEY=${AMAP_API_KEY}
+    volumes:
+      - ride-record-data:/app/data
+      - ride-record-logs:/app/logs
+      - ride-record-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ride-record-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: riderecord-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ride-record-web:/usr/share/nginx/html:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - ride-record-network
+
+  # Web 前端 (可选，静态托管)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: riderecord/web:latest
+    container_name: riderecord-web
+    # 仅用于构建，产物挂载到nginx
+    volumes:
+      - ride-record-web:/app/dist
+
+networks:
+  ride-record-network:
+    driver: bridge
+
+volumes:
+  ride-record-data:
+  ride-record-logs:
+  ride-record-uploads:
+  ride-record-web:
+```
+
+#### 7.3.3 部署命令
+
+```bash
+# ===========================================
+# Docker 部署操作指南
+# ===========================================
+
+# 1. 构建镜像
+docker-compose build
+
+# 2. 启动服务
+docker-compose up -d
+
+# 3. 查看日志
+docker-compose logs -f api
+
+# 4. 健康检查
+curl http://localhost:3000/health
+
+# 5. 数据库迁移 (首次部署)
+docker-compose exec api npx prisma migrate deploy
+
+# 6. 停止服务
+docker-compose down
+
+# 7. 更新部署
+docker-compose pull
+docker-compose up -d
+
+# 8. 备份数据
+docker run --rm -v ride-record-data:/data -v $(pwd):/backup \
+  alpine tar czf /backup/ride-record-data-$(date +%Y%m%d).tar.gz /data
+
+# 9. 恢复数据
+docker run --rm -v ride-record-data:/data -v $(pwd):/backup \
+  alpine tar xzf /backup/ride-record-data-20260306.tar.gz -C /
+```
+
+#### 7.3.4 Docker Hub 发布
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Docker Hub 发布流程                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   镜像命名                                                       │
+│   ─────────────────────────────────────────────────────────    │
+│   riderecord/api:latest          # 最新版本                     │
+│   riderecord/api:v1.0.0          # 指定版本                     │
+│   riderecord/api:v1.0.0-alpine   # Alpine版本 (更小)           │
+│                                                                  │
+│   发布命令                                                       │
+│   ─────────────────────────────────────────                    │
+│   # 登录 Docker Hub                                             │
+│   docker login                                                  │
+│                                                                  │
+│   # 标记镜像                                                    │
+│   docker tag riderecord/api:latest riderecord/api:v1.0.0       │
+│                                                                  │
+│   # 推送镜像                                                    │
+│   docker push riderecord/api:latest                             │
+│   docker push riderecord/api:v1.0.0                             │
+│                                                                  │
+│   GitHub Actions 自动构建                                       │
+│   ─────────────────────────────────────────                    │
+│   .github/workflows/docker-publish.yml:                         │
+│   - 推送到 main 分支时自动构建                                  │
+│   - 创建 Tag 时自动发布对应版本                                 │
+│   - 多架构支持: linux/amd64, linux/arm64                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 7.3.5 镜像大小优化
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    镜像优化策略                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   优化措施                                                       │
+│   ─────────────────────────────────────────────────────────    │
+│   1. 多阶段构建        减少最终镜像大小                        │
+│   2. Alpine基础镜像    node:20-alpine (~50MB)                  │
+│   3. 生产依赖          npm ci --only=production                │
+│   4. 删除缓存          npm cache clean --force                 │
+│   5. .dockerignore     排除不必要文件                          │
+│                                                                  │
+│   .dockerignore 示例                                            │
+│   ─────────────────────────────────────────                    │
+│   node_modules                                                  │
+│   dist                                                          │
+│   *.log                                                         │
+│   .env                                                          │
+│   .env.*                                                        │
+│   tests/                                                        │
+│   docs/                                                         │
+│   .git/                                                         │
+│   .github/                                                      │
+│   *.md                                                          │
+│                                                                  │
+│   预期镜像大小                                                   │
+│   ─────────────────────────────────────────                    │
+│   未优化:     ~500MB                                            │
+│   优化后:     ~100MB                                            │
+│   Alpine:     ~80MB                                             │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 8. 手表应用安装与发布指南
@@ -2595,9 +2895,10 @@ Response:
 | 1.0 | 2026-03-06 | Claude | 初始版本 |
 | 1.1 | 2026-03-06 | Claude | 改为轻量化架构：SQLite替代PostgreSQL/Redis，单机部署，添加手表应用安装和华为应用市场发布指南 |
 | 1.2 | 2026-03-06 | Claude | 添加开源发布规划：许可证选择、敏感信息分离、代码结构规范、必备文档、商业化考量、社区建设、风险评估 |
+| 1.3 | 2026-03-06 | Claude | 添加Docker容器化部署方案：多阶段Dockerfile、docker-compose配置、镜像优化、Docker Hub发布流程 |
 
 ---
 
-**文档状态**: 待审批
+**文档状态**: 已批准
 
-**下一步**: 用户审批后进入初始化阶段，创建 feature-list.json
+**下一步**: 已创建 feature-list.json，开始 Worker 阶段实现功能
