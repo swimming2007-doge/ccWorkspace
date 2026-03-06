@@ -9,7 +9,7 @@
 ## Current State
 
 **当前里程碑**: M2 - MVP Core
-**当前任务**: F004 完成，继续 F005 - 手表端骑行界面
+**当前任务**: F005 完成，继续 F006 - 手机-手表BLE通信
 **状态**: ⏳ M2 进行中
 
 ### 完成情况
@@ -17,7 +17,7 @@
 | 里程碑 | 状态 | 完成率 |
 |--------|------|--------|
 | M1 - Foundation | ✅ 完成 | 100% |
-| M2 - MVP Core | ⏳ 进行中 | 11% (1/9) |
+| M2 - MVP Core | ⏳ 进行中 | 22% (2/9) |
 | M3 - MVP Navigation & Sync | ⏳ 待开始 | 0% |
 | M4 - MVP Release | ⏳ 待开始 | 0% |
 | M5 - Full Version | ⏳ 待开始 | 0% |
@@ -33,7 +33,7 @@
 | F003-Docker | Docker容器化部署 | P0 | ✅ 完成 |
 | F003 | 服务端API骨架 | P0 | ⏳ 待开始 |
 | F004 | 动作检测核心算法 | P0 | ✅ 完成 |
-| F005 | 手表端骑行界面 | P0 | ⏳ 待开始 |
+| F005 | 手表端骑行界面 | P0 | ✅ 完成 |
 | F006 | 手机-手表BLE通信 | P0 | ⏳ 待开始 |
 | F007 | GPS数据采集 | P0 | ⏳ 待开始 |
 | F008 | 心率数据采集 | P0 | ⏳ 待开始 |
@@ -59,31 +59,31 @@
 
 ## Session Log
 
-### Session 2 - 2026-03-06
+### Session 2 - 2026-03-06 (续)
 
-**目标**: 开始 M2 MVP Core 开发
+**目标**: 继续开发 M2 MVP Core
 
 **完成事项**:
-- ✅ F004 动作检测核心算法
-  - 创建手表端项目骨架 (watch/)
-  - 实现传感器数据采集服务 (SensorService.ets)
-  - 实现动作检测核心算法 (ActionDetector.ets)
-  - 实现骑行状态机 (RideStateMachine.ets)
-  - 编写单元测试 (ActionDetector.test.ets, RideStateMachine.test.ets)
+- ✅ F005 手表端骑行界面
+  - 创建数据展示组件 (DataCard, HeartRateRing, SpeedDisplay)
+  - 创建骑行中页面 (RidingPage.ets)
+  - 创建骑行总结页面 (SummaryPage.ets)
+  - 更新首页集成状态管理
+  - 实现页面导航逻辑
 
 **进行中**:
-- 🔄 F005 手表端骑行界面
+- 🔄 F006 手机-手表BLE通信
 
 **阻塞问题**:
 - 无
 
 **下一步**:
-- 实现手表端骑行界面
 - 实现手机-手表BLE通信
+- 实现GPS数据采集
 
 ---
 
-### Session 1 - 2026-03-06
+### Session 2 - 2026-03-06
 
 **目标**: 初始化项目，创建项目骨架
 
