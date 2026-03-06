@@ -121,6 +121,17 @@
   - 信号覆盖服务 (SignalCoverageService.ets)
   - 实时风险等级评估
   - 安全建议生成
+- **F018 离线地图** (手机)
+  - 离线地图服务 (OfflineMapService.ets)
+  - 瓦片下载服务 (TileDownloadService.ets)
+  - 存储空间管理服务 (StorageManager.ets)
+  - 区域管理 (添加/删除/重命名)
+  - 下载任务管理 (开始/暂停/继续)
+  - 存储空间监控和预警
+  - LRU清理策略
+  - 地图更新检测
+  - 离线地图UI组件 (OfflineMapComponents.ets)
+  - 离线地图页面 (OfflineMapPage.ets)
 - **F023 用户设置模块** (手机)
   - 设置服务 (SettingsService.ets)
   - 骑行偏好设置 (导航模式、单位制、语音等)
