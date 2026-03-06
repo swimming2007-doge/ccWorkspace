@@ -20,7 +20,7 @@
 | M2 - MVP Core | ✅ 完成 | 100% |
 | M3 - MVP Navigation & Sync | ✅ 完成 | 100% |
 | M4 - MVP Release | ✅ 完成 | 100% |
-| M5 - Full Version | ✅ 完成 | 100% (5/5) |
+| M5 - Full Version | ⏳ 进行中 | 50% (4/8) |
 | M6 - Polish & Release | ⏳ 进行中 | 50% (1/2) |
 
 ### 功能进度
