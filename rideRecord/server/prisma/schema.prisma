@@ -1,0 +1,264 @@
+// Prisma Schema for RideRecord Server
+// SQLite database for lightweight deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User Management
+// ============================================
+
+model User {
+  id            String   @id @default(uuid())
+  huaweiId      String?  @unique // 华为账号ID
+  nickname      String
+  avatar        String?
+  email         String?
+  phone         String?
+
+  // 用户配置
+  height        Float?   // 身高 (cm)
+  weight        Float?   // 体重 (kg)
+  maxHeartRate  Int?     // 最大心率
+  birthDate     String?  // 出生日期
+
+  // 骑行偏好
+  defaultNavMode     String @default("road") // road, adventure, mixed
+  adventureRatio     Float  @default(0.3)    // 探险比例 0-1
+  maxRiskIndex       Float  @default(3.0)    // 最大冒险指数 1-5
+  unitSystem         String @default("metric") // metric, imperial
+  voiceNavigation    Boolean @default(true)
+
+  // 动作检测设置
+  autoStartStop      Boolean @default(true)
+  detectionSensitivity String @default("medium") // low, medium, high
+  pauseTimeout       Int     @default(30) // 暂停超时 (分钟)
+
+  // 同步设置
+  cloudSyncEnabled   Boolean @default(true)
+  stravaConnected    Boolean @default(false)
+  stravaAccessToken  String?
+  stravaRefreshToken String?
+  stravaTokenExpires DateTime?
+
+  // 时间戳
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lastLoginAt    DateTime?
+
+  // 关系
+  rides          Ride[]
+  devices        Device[]
+  syncRecords    SyncRecord[]
+
+  @@index([huaweiId])
+  @@index([email])
+}
+
+// ============================================
+// Device Management
+// ============================================
+
+model Device {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String
+  type          String   // phone, watch
+  model         String?
+  osVersion     String?
+  appVersion    String?
+  lastSyncAt    DateTime?
+  status        String   @default("active") // active, inactive
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+}
+
+// ============================================
+// Ride Records
+// ============================================
+
+model Ride {
+  id            String   @id @default(uuid())
+  userId        String
+  deviceId      String?  // 记录设备ID
+
+  // 基本信息
+  title         String?
+  note          String?
+  source        String   @default("phone") // phone, watch, manual
+
+  // 时间信息
+  startTime     DateTime
+  endTime       DateTime?
+  duration      Int      @default(0)  // 总时长 (秒)
+  movingTime    Int      @default(0)  // 移动时长 (秒)
+  pauseCount    Int      @default(0)
+
+  // 距离和速度
+  distance      Float    @default(0)  // 总距离 (米)
+  avgSpeed      Float    @default(0)  // 平均速度 (m/s)
+  maxSpeed      Float    @default(0)  // 最高速度 (m/s)
+
+  // 心率数据
+  avgHeartRate  Int?
+  maxHeartRate  Int?
+  hrZone1Time   Int      @default(0)  // 心率区间时间 (秒)
+  hrZone2Time   Int      @default(0)
+  hrZone3Time   Int      @default(0)
+  hrZone4Time   Int      @default(0)
+  hrZone5Time   Int      @default(0)
+
+  // 海拔数据
+  elevationGain Float    @default(0)  // 爬升 (米)
+  elevationLoss Float    @default(0)  // 下降 (米)
+  minAltitude   Float?
+  maxAltitude   Float?
+
+  // 热量消耗
+  calories      Int      @default(0)
+
+  // 探险相关
+  adventurePercent Float  @default(0)  // 探险路段占比
+  avgRiskIndex   Float?
+
+  // 轨迹信息
+  trackPointCount Int    @default(0)
+  trackUrl       String? // OBS存储地址
+  trackChecksum  String? // 数据校验
+
+  // 照片
+  photoCount    Int      @default(0)
+  photoUrls     String?  // JSON数组
+
+  // 天气
+  weatherTemp   Float?
+  weatherHumidity Float?
+  weatherCondition String?
+
+  // 状态
+  status        String   @default("recording") // recording, paused, completed, discarded
+
+  // 同步状态
+  syncedAt      DateTime?
+  syncStatus    String   @default("pending") // pending, synced, failed
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  segments      Segment[]
+
+  @@index([userId])
+  @@index([startTime])
+  @@index([status])
+  @@index([syncStatus])
+}
+
+// ============================================
+// Segments
+// ============================================
+
+model Segment {
+  id            String   @id @default(uuid())
+  rideId        String
+
+  type          String   // road, trail, mixed
+  startIndex    Int
+  endIndex      Int
+  distance      Float
+  duration      Int
+  avgSpeed      Float
+  riskIndex     Float?
+  surfaceType   String?
+
+  createdAt     DateTime @default(now())
+
+  ride          Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+}
+
+// ============================================
+// Sync Records
+// ============================================
+
+model SyncRecord {
+  id            String   @id @default(uuid())
+  userId        String
+  rideId        String?
+
+  direction     String   // upload, download
+  status        String   @default("pending") // pending, success, failed
+  fileSize      Int?
+  errorMessage  String?
+
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// File Index (OBS tracking)
+// ============================================
+
+model FileIndex {
+  id            String   @id @default(uuid())
+  userId        String
+  rideId        String?
+
+  fileName      String
+  fileType      String   // track, photo, map
+  fileSize      Int
+  obsKey        String   // OBS对象键
+  obsBucket     String
+  mimeType      String?
+  checksum      String?
+
+  uploadedAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([rideId])
+  @@index([obsKey])
+}
+
+// ============================================
+// System Config
+// ============================================
+
+model SystemConfig {
+  key           String   @id
+  value         String
+  description   String?
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// API Rate Limit (for tracking)
+// ============================================
+
+model RateLimitLog {
+  id            String   @id @default(uuid())
+  ip            String
+  endpoint      String
+  timestamp     DateTime @default(now())
+
+  @@index([ip])
+  @@index([timestamp])
+}

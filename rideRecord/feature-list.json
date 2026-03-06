@@ -142,7 +142,7 @@
         "TypeScript配置正确",
         "共享模块可被各平台引用"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F002",
@@ -164,7 +164,7 @@
         "外键关系正确",
         "索引优化完成"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F003",
