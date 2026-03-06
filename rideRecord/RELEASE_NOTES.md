@@ -132,6 +132,16 @@
   - 地图更新检测
   - 离线地图UI组件 (OfflineMapComponents.ets)
   - 离线地图页面 (OfflineMapPage.ets)
+- **F021 微信分享功能** (手机)
+  - 微信分享服务 (WeChatShareService.ets)
+  - 分享图片生成器 (ShareImageGenerator.ets)
+  - 微信好友/群分享
+  - 朋友圈分享
+  - 4种分享模板 (简约/运动/探险/数据)
+  - 分享内容定制 (位置/速度/心率/热量)
+  - 分享图片轨迹渲染
+  - 分享UI组件 (ShareComponents.ets)
+  - 分享页面 (SharePage.ets)
 - **F023 用户设置模块** (手机)
   - 设置服务 (SettingsService.ets)
   - 骑行偏好设置 (导航模式、单位制、语音等)
