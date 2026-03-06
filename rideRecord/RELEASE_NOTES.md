@@ -69,6 +69,15 @@
   - 轨迹地图展示
   - 导出选项 (GPX/TCX/JSON)
   - 分享和删除功能
+- **F013 公路导航模式** (手机)
+  - 导航服务 (NavigationService.ets)
+  - 路线规划功能
+  - 导航界面组件 (NavigationComponents.ets)
+  - 转向提示卡片
+  - 导航信息面板
+  - 偏离路线检测
+  - 导航控制按钮
+  - 导航页面 (NavigationPage.ets)
 
 #### 技术架构
 - 采用轻量化单体架构
