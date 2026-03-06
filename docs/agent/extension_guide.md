@@ -214,7 +214,7 @@ class InternalKnowledgeScraper(ArXivScraperSkill):
 ```bash
 # .env
 WORDPRESS_ACCESS_TOKEN=your_real_token_here
-BLOG_ID=791025341
+BLOG_ID=253145378
 ```
 
 ### 7.2 .env.internal 文件（内网）

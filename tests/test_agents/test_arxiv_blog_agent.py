@@ -10,7 +10,6 @@ from agents.arxiv_blog_agent import (
     ArXivBlogAgent,
     AgentState,
     AgentStatus,
-    AgentConfig,
     AgentResult,
 )
 from skills.arxiv_scraper import ArXivPaper, ScraperResult
@@ -50,28 +49,6 @@ class TestAgentStatus:
         assert result["state"] == "completed"
         assert result["papers_count"] == 5
         assert result["post_url"] == "https://example.com/post"
-
-
-class TestAgentConfig:
-    """AgentConfig 配置类测试"""
-
-    def test_default_values(self):
-        """测试默认值"""
-        config = AgentConfig()
-        assert config.arxiv_query == "large model training inference"
-        assert config.arxiv_max_results == 10
-        assert config.dry_run is False
-
-    def test_custom_values(self):
-        """测试自定义值"""
-        config = AgentConfig(
-            arxiv_query="transformer",
-            arxiv_max_results=5,
-            dry_run=True,
-        )
-        assert config.arxiv_query == "transformer"
-        assert config.arxiv_max_results == 5
-        assert config.dry_run is True
 
 
 class TestAgentResult:
@@ -123,16 +100,7 @@ class TestArXivBlogAgent:
     def test_init_dry_run(self):
         """测试干运行模式初始化"""
         agent = ArXivBlogAgent(dry_run=True)
-        assert agent.config.dry_run is True
-
-    def test_init_custom_config(self):
-        """测试自定义配置初始化"""
-        agent = ArXivBlogAgent(config={
-            "arxiv_query": "custom query",
-            "arxiv_max_results": 5,
-        })
-        assert agent.config.arxiv_query == "custom query"
-        assert agent.config.arxiv_max_results == 5
+        assert agent.config.agent.dry_run is True
 
     def test_register_skills(self):
         """测试技能注册"""
@@ -201,7 +169,7 @@ class TestArXivBlogAgent:
         result = agent.run()
 
         assert result.success is False
-        assert "爬取失败" in result.error_message
+        assert "Crawl failed" in result.error_message
         assert agent.status.state == AgentState.FAILED
 
     @patch.object(ArXivBlogAgent, '_step_scrape')
@@ -221,7 +189,7 @@ class TestArXivBlogAgent:
         result = agent.run()
 
         assert result.success is False
-        assert "生成失败" in result.error_message
+        assert "Generation failed" in result.error_message
 
     def test_get_status(self):
         """测试获取状态"""

@@ -45,7 +45,7 @@ content:
 
 # 博客发布配置
 blog:
-  blog_id: "791025341"
+  blog_id: "253145378"
   access_token: "${WORDPRESS_TOKEN}"  # 环境变量
   status: "publish"
 
@@ -145,7 +145,7 @@ arxiv_blog_agent/
 | `arxiv.proxy` | 代理地址 | null | 内网必须 |
 | `arxiv.ssl_verify` | SSL验证 | true | 内网可能需要 |
 | `content.style` | 写作风格 | professional | 可选 |
-| `blog.blog_id` | 博客ID | 791025341 | 实际发布时 |
+| `blog.blog_id` | 博客ID | 253145378 | 实际发布时 |
 | `blog.access_token` | 访问令牌 | 测试令牌 | **实际发布必须** |
 | `blog.status` | 发布状态 | publish | 可选 |
 | `network.proxy` | 全局代理 | null | 内网必须 |

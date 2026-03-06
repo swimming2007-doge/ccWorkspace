@@ -77,6 +77,10 @@ class TestHttpClient:
     def test_context_manager(self):
         """测试上下文管理器"""
         with HttpClient() as client:
+            # Session is created lazily, so _session is None until accessed
+            assert client._session is None
+            # Access session property to create it
+            _ = client.session
             assert client._session is not None
 
         # 退出后 Session 应该关闭

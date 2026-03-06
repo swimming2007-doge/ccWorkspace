@@ -121,7 +121,7 @@ class AgentConfig:
 
     # 博客发布配置
     blog_status: str = "publish"  # publish/draft
-    blog_id: str = "791025341"
+    blog_id: str = "253145378"
 
     # 网络配置
     timeout: int = 30

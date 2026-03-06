@@ -4,7 +4,7 @@
 功能：
 - 从单一 YAML 文件加载所有配置
 - 支持环境变量覆盖
-- 提供默认值
+- 所有配置必须从 YAML 文件获取
 """
 
 import os
@@ -18,12 +18,12 @@ import yaml
 @dataclass
 class ArxivConfig:
     """ArXiv 爬取配置"""
-    query: str = "large model training inference"
-    max_results: int = 10
-    api_url: str = "https://export.arxiv.org/api/query"
-    timeout: int = 30
-    max_retries: int = 3
-    retry_delay: int = 3
+    query: str = ""
+    max_results: int = 0
+    api_url: str = ""
+    timeout: int = 0
+    max_retries: int = 0
+    retry_delay: int = 0
     proxy: Optional[str] = None
     ssl_verify: bool = True
 
@@ -31,61 +31,42 @@ class ArxivConfig:
 @dataclass
 class ContentConfig:
     """内容生成配置"""
-    style: str = "professional"
-    language: str = "zh"
-    title_prefix: str = "ArXiv 大模型训推进展 - "
-    category: str = "AI/大模型"
-    max_abstract_length: int = 300
+    style: str = ""
+    language: str = ""
+    title_prefix: str = ""
+    category: str = ""
+    max_abstract_length: int = 0
     include_pdf_link: bool = True
 
 
 @dataclass
 class BlogConfig:
-    """博客发布配置"""
-    api_base: str = "https://public-api.wordpress.com/rest/v1.1"
-    blog_id: str = "791025341"
-    blog_url: str = "https://swimming2007.wordpress.com/"
+    """博客发布配置 - 所有参数必须从 config.yaml 获取"""
+    api_base: str = ""
+    blog_id: str = ""
+    blog_url: str = ""
     access_token: str = ""
-    status: str = "publish"
-    timeout: int = 20
-    max_retries: int = 3
-    retry_delay: int = 2
+    status: str = ""
+    default_category: str = ""
+    timeout: int = 0
+    max_retries: int = 0
+    retry_delay: int = 0
     proxy: Optional[str] = None
     ssl_verify: bool = True
-
-
-@dataclass
-class NetworkConfig:
-    """网络配置"""
-    timeout: int = 20
-    connect_timeout: int = 10
-    read_timeout: int = 20
-    max_retries: int = 3
-    retry_delay: float = 1.0
-    pool_connections: int = 10
-    pool_maxsize: int = 10
-    proxy: Optional[str] = None
-    proxy_http: Optional[str] = None
-    proxy_https: Optional[str] = None
-    ssl_verify: bool = True
-    user_agent: str = "ArXiv-Blog-Agent/1.0"
 
 
 @dataclass
 class LoggingConfig:
     """日志配置"""
-    level: str = "INFO"
-    file: str = "./logs/agent.log"
-    format: str = "[%(asctime)s] %(levelname)s [%(name)s] %(message)s"
-    console_level: str = "INFO"
-    file_level: str = "DEBUG"
+    level: str = ""
+    file: str = ""
+    format: str = ""
 
 
 @dataclass
 class AgentConfigData:
     """Agent 配置"""
     dry_run: bool = False
-    checkpoint_file: str = "./logs/checkpoint.json"
 
 
 @dataclass
@@ -94,7 +75,6 @@ class Config:
     arxiv: ArxivConfig = field(default_factory=ArxivConfig)
     content: ContentConfig = field(default_factory=ContentConfig)
     blog: BlogConfig = field(default_factory=BlogConfig)
-    network: NetworkConfig = field(default_factory=NetworkConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     agent: AgentConfigData = field(default_factory=AgentConfigData)
 
@@ -106,7 +86,6 @@ def expand_env_vars(value: Any) -> Any:
     支持 ${VAR_NAME} 格式
     """
     if isinstance(value, str):
-        # 匹配 ${VAR_NAME} 格式
         pattern = r'\$\{([^}]+)\}'
         matches = re.findall(pattern, value)
 
@@ -123,6 +102,13 @@ def expand_env_vars(value: Any) -> Any:
         return value
 
 
+def _validate_required_config(config_name: str, data: dict, required_keys: list):
+    """验证必需的配置项"""
+    missing = [k for k in required_keys if k not in data or data[k] is None or data[k] == ""]
+    if missing:
+        raise ValueError(f"[{config_name}] 缺少必需配置项: {missing}")
+
+
 def load_config(config_path: str = "config.yaml") -> Config:
     """
     加载配置文件
@@ -132,97 +118,96 @@ def load_config(config_path: str = "config.yaml") -> Config:
 
     Returns:
         Config: 配置对象
+
+    Raises:
+        FileNotFoundError: 配置文件不存在
+        ValueError: 缺少必需配置项
     """
-    # 默认配置
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"配置文件不存在: {config_path}")
+
+    with open(config_path, "r", encoding="utf-8") as f:
+        raw_config = yaml.safe_load(f)
+
+    if not raw_config:
+        raise ValueError(f"配置文件为空: {config_path}")
+
+    # 展开环境变量
+    raw_config = expand_env_vars(raw_config)
+
     config = Config()
 
-    # 尝试加载配置文件
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                raw_config = yaml.safe_load(f) or {}
+    # 验证并加载 ArXiv 配置
+    if "arxiv" not in raw_config:
+        raise ValueError("配置文件缺少 'arxiv' 配置节")
+    arxiv_data = raw_config["arxiv"]
+    _validate_required_config("arxiv", arxiv_data,
+        ["query", "max_results", "api_url", "timeout", "max_retries", "retry_delay"])
+    config.arxiv = ArxivConfig(
+        query=arxiv_data["query"],
+        max_results=arxiv_data["max_results"],
+        api_url=arxiv_data["api_url"],
+        timeout=arxiv_data["timeout"],
+        max_retries=arxiv_data["max_retries"],
+        retry_delay=arxiv_data["retry_delay"],
+        proxy=arxiv_data.get("proxy"),
+        ssl_verify=arxiv_data.get("ssl_verify", True),
+    )
 
-            # 展开环境变量
-            raw_config = expand_env_vars(raw_config)
+    # 验证并加载 Content 配置
+    if "content" not in raw_config:
+        raise ValueError("配置文件缺少 'content' 配置节")
+    content_data = raw_config["content"]
+    _validate_required_config("content", content_data,
+        ["style", "language", "title_prefix", "category", "max_abstract_length"])
+    config.content = ContentConfig(
+        style=content_data["style"],
+        language=content_data["language"],
+        title_prefix=content_data["title_prefix"],
+        category=content_data["category"],
+        max_abstract_length=content_data["max_abstract_length"],
+        include_pdf_link=content_data.get("include_pdf_link", True),
+    )
 
-            # 解析各模块配置
-            if "arxiv" in raw_config:
-                arxiv_data = raw_config["arxiv"]
-                config.arxiv = ArxivConfig(
-                    query=arxiv_data.get("query", config.arxiv.query),
-                    max_results=arxiv_data.get("max_results", config.arxiv.max_results),
-                    api_url=arxiv_data.get("api_url", config.arxiv.api_url),
-                    timeout=arxiv_data.get("timeout", config.arxiv.timeout),
-                    max_retries=arxiv_data.get("max_retries", config.arxiv.max_retries),
-                    retry_delay=arxiv_data.get("retry_delay", config.arxiv.retry_delay),
-                    proxy=arxiv_data.get("proxy", config.arxiv.proxy),
-                    ssl_verify=arxiv_data.get("ssl_verify", config.arxiv.ssl_verify),
-                )
+    # 验证并加载 Blog 配置
+    if "blog" not in raw_config:
+        raise ValueError("配置文件缺少 'blog' 配置节")
+    blog_data = raw_config["blog"]
+    _validate_required_config("blog", blog_data,
+        ["api_base", "blog_id", "blog_url", "access_token", "status",
+         "default_category", "timeout", "max_retries", "retry_delay"])
+    config.blog = BlogConfig(
+        api_base=blog_data["api_base"],
+        blog_id=blog_data["blog_id"],
+        blog_url=blog_data["blog_url"],
+        access_token=blog_data["access_token"],
+        status=blog_data["status"],
+        default_category=blog_data["default_category"],
+        timeout=blog_data["timeout"],
+        max_retries=blog_data["max_retries"],
+        retry_delay=blog_data["retry_delay"],
+        proxy=blog_data.get("proxy"),
+        ssl_verify=blog_data.get("ssl_verify", True),
+    )
 
-            if "content" in raw_config:
-                content_data = raw_config["content"]
-                config.content = ContentConfig(
-                    style=content_data.get("style", config.content.style),
-                    language=content_data.get("language", config.content.language),
-                    title_prefix=content_data.get("title_prefix", config.content.title_prefix),
-                    category=content_data.get("category", config.content.category),
-                    max_abstract_length=content_data.get("max_abstract_length", config.content.max_abstract_length),
-                    include_pdf_link=content_data.get("include_pdf_link", config.content.include_pdf_link),
-                )
+    # 验证并加载 Logging 配置
+    if "logging" not in raw_config:
+        raise ValueError("配置文件缺少 'logging' 配置节")
+    logging_data = raw_config["logging"]
+    _validate_required_config("logging", logging_data, ["level", "file", "format"])
+    config.logging = LoggingConfig(
+        level=logging_data["level"],
+        file=logging_data["file"],
+        format=logging_data["format"],
+    )
 
-            if "blog" in raw_config:
-                blog_data = raw_config["blog"]
-                config.blog = BlogConfig(
-                    api_base=blog_data.get("api_base", config.blog.api_base),
-                    blog_id=blog_data.get("blog_id", config.blog.blog_id),
-                    blog_url=blog_data.get("blog_url", config.blog.blog_url),
-                    access_token=blog_data.get("access_token", config.blog.access_token),
-                    status=blog_data.get("status", config.blog.status),
-                    timeout=blog_data.get("timeout", config.blog.timeout),
-                    max_retries=blog_data.get("max_retries", config.blog.max_retries),
-                    retry_delay=blog_data.get("retry_delay", config.blog.retry_delay),
-                    proxy=blog_data.get("proxy", config.blog.proxy),
-                    ssl_verify=blog_data.get("ssl_verify", config.blog.ssl_verify),
-                )
-
-            if "network" in raw_config:
-                network_data = raw_config["network"]
-                config.network = NetworkConfig(
-                    timeout=network_data.get("timeout", config.network.timeout),
-                    connect_timeout=network_data.get("connect_timeout", config.network.connect_timeout),
-                    read_timeout=network_data.get("read_timeout", config.network.read_timeout),
-                    max_retries=network_data.get("max_retries", config.network.max_retries),
-                    retry_delay=network_data.get("retry_delay", config.network.retry_delay),
-                    pool_connections=network_data.get("pool_connections", config.network.pool_connections),
-                    pool_maxsize=network_data.get("pool_maxsize", config.network.pool_maxsize),
-                    proxy=network_data.get("proxy", config.network.proxy),
-                    proxy_http=network_data.get("proxy_http", config.network.proxy_http),
-                    proxy_https=network_data.get("proxy_https", config.network.proxy_https),
-                    ssl_verify=network_data.get("ssl_verify", config.network.ssl_verify),
-                    user_agent=network_data.get("user_agent", config.network.user_agent),
-                )
-
-            if "logging" in raw_config:
-                logging_data = raw_config["logging"]
-                config.logging = LoggingConfig(
-                    level=logging_data.get("level", config.logging.level),
-                    file=logging_data.get("file", config.logging.file),
-                    format=logging_data.get("format", config.logging.format),
-                    console_level=logging_data.get("console_level", config.logging.console_level),
-                    file_level=logging_data.get("file_level", config.logging.file_level),
-                )
-
-            if "agent" in raw_config:
-                agent_data = raw_config["agent"]
-                config.agent = AgentConfigData(
-                    dry_run=agent_data.get("dry_run", config.agent.dry_run),
-                    checkpoint_file=agent_data.get("checkpoint_file", config.agent.checkpoint_file),
-                )
-
-        except Exception as e:
-            print(f"Warning: Failed to load config file: {e}")
-    else:
-        print(f"Warning: Config file not found: {config_path}, using defaults")
+    # 验证并加载 Agent 配置
+    if "agent" not in raw_config:
+        raise ValueError("配置文件缺少 'agent' 配置节")
+    agent_data = raw_config["agent"]
+    config.agent = AgentConfigData(
+        dry_run=agent_data.get("dry_run", False),
+    )
 
     return config
 
@@ -242,7 +227,6 @@ def get_config_dict(config: Config) -> Dict[str, Any]:
         "arxiv": asdict(config.arxiv),
         "content": asdict(config.content),
         "blog": asdict(config.blog),
-        "network": asdict(config.network),
         "logging": asdict(config.logging),
         "agent": asdict(config.agent),
     }

@@ -172,7 +172,7 @@ outputs:
 
 config:
   api_base: "https://public-api.wordpress.com/rest/v1.1"
-  blog_id: "791025341"
+  blog_id: "253145378"
   access_token: "${WORDPRESS_ACCESS_TOKEN}"
   default_status: "publish"
   timeout: 20

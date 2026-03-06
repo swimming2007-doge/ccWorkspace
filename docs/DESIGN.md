@@ -218,7 +218,7 @@ content:
 # ============================================================
 blog:
   api_base: "https://public-api.wordpress.com/rest/v1.1"
-  blog_id: "791025341"
+  blog_id: "253145378"
   blog_url: "https://swimming2007.wordpress.com/"
   access_token: "${WORDPRESS_TOKEN}"   # 环境变量或直接配置
   status: "publish"                     # publish / draft

@@ -245,7 +245,7 @@ if result.success:
 | content.style | 写作风格 | "professional" |
 | content.title_prefix | 标题前缀 | "ArXiv 大模型训推进展 - " |
 | blog.api_base | WordPress API 地址 | "https://public-api.wordpress.com/rest/v1.1" |
-| blog.blog_id | 博客 ID | "791025341" |
+| blog.blog_id | 博客 ID | "253145378" |
 | blog.access_token | 访问令牌 | (测试令牌) |
 | blog.status | 发布状态 | "publish" |
 | network.timeout | 网络超时 | 20 |

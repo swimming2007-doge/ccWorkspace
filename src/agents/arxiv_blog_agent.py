@@ -181,10 +181,7 @@ class ArXivBlogAgent:
             self.logger.info("Dry run mode, using mock poster")
             result = self.skills["mock_blog_poster"].execute(blog_content)
         else:
-            result = self.skills["blog_poster"].execute(
-                blog_content=blog_content,
-                status=self.config.blog.status,
-            )
+            result = self.skills["blog_poster"].execute(blog_content)
 
         if result.success:
             self.status.post_url = result.post_url

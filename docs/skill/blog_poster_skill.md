@@ -31,7 +31,7 @@ Blog Poster Skill - 发布博客到 WordPress.com
 
 默认配置：
 - 平台: WordPress.com
-- 博客 ID: 791025341
+- 博客 ID: 253145378
 - 参考站点: https://swimming2007.wordpress.com/
 - 认证: Bearer Token（测试令牌，实际使用需替换）
 - 状态: publish
@@ -75,13 +75,13 @@ class BlogPosterSkill:
     DEFAULT_CONFIG = {
         # WordPress.com API 配置
         "api_base": "https://public-api.wordpress.com/rest/v1.1",
-        "blog_id": "791025341",  # swimming2007.wordpress.com
+        "blog_id": "253145378",  # swimming2007.wordpress.com
         "blog_url": "https://swimming2007.wordpress.com/",
 
         # 认证配置
         # 注意：此为测试令牌，实际使用时需替换为真实令牌
         # 获取方式：https://developer.wordpress.com/docs/oauth2/
-        "access_token": "NzkxMDI1MzQxJTNBYXp4cCUyMGY0ZHYlMjB5c2tzJTIweWJxdiUyMA==",
+        "access_token": "NIn1IRDb#eBYwyaDU5e%6d(5Rr9iBqxtnJ8IlwRZk!s6u57OqHWmW6XQTpsN&EAu",
 
         # 发布配置
         "default_status": "publish",  # publish, draft, private
@@ -412,8 +412,8 @@ class InternalBlogPoster(BlogPosterSkill):
 # configs/config.yaml
 blog_poster:
   api_base: "https://public-api.wordpress.com/rest/v1.1"
-  blog_id: "791025341"
-  access_token: "NzkxMDI1MzQxJTNBYXp4cCUyMGY0ZHYlMjB5c2tzJTIweWJxdiUyMA=="
+  blog_id: "253145378"
+  access_token: "NIn1IRDb#eBYwyaDU5e%6d(5Rr9iBqxtnJ8IlwRZk!s6u57OqHWmW6XQTpsN&EAu"
   default_status: "publish"
   timeout: 20
   max_retries: 3

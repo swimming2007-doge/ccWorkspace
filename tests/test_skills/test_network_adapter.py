@@ -135,6 +135,10 @@ class TestNetworkAdapter:
     def test_context_manager(self):
         """测试上下文管理器"""
         with NetworkAdapter() as adapter:
+            # Session is created lazily, so _session is None until accessed
+            assert adapter._session is None
+            # Access session property to create it
+            _ = adapter.session
             assert adapter._session is not None
 
         # 退出后 Session 应该关闭
