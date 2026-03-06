@@ -187,7 +187,7 @@
         "健康检查接口正常",
         "Swagger文档可访问"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "id": "F003-Docker",
