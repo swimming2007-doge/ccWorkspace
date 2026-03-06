@@ -1,0 +1,41 @@
+version: 2
+updates:
+  # 服务端依赖
+  - package-ecosystem: "npm"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "your-org/team"
+    labels:
+      - "dependencies"
+      - "server"
+    commit-message:
+      prefix: "deps"
+
+  # Web 端依赖
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "your-org/team"
+    labels:
+      - "dependencies"
+      - "web"
+    commit-message:
+      prefix: "deps"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"

@@ -1,0 +1,30 @@
+# CODEOWNERS - 代码所有者配置
+# https://docs.github.com/zh/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# 默认所有者
+* @your-org/core-team
+
+# 手机端代码
+/phone/ @your-org/mobile-team
+
+# 手表端代码
+/watch/ @your-org/mobile-team
+
+# 服务端代码
+/server/ @your-org/backend-team
+
+# Web 端代码
+/web/ @your-org/frontend-team
+
+# 共享代码
+/shared/ @your-org/core-team
+
+# 文档
+/docs/ @your-org/docs-team
+*.md @your-org/docs-team
+
+# CI/CD 配置
+/.github/workflows/ @your-org/devops-team
+
+# 安全相关
+SECURITY.md @your-org/security-team

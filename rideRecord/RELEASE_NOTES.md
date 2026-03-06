@@ -152,7 +152,20 @@
   - Webhook 事件处理
   - Strava UI组件 (StravaComponents.ets)
   - Strava同步页面 (StravaPage.ets)
-- **F023 用户设置模块** (手机)
+- **F025 开源准备** (文档)
+  - LICENSE 文件 (MIT)
+  - README.md 中文版
+  - README_EN.md 英文版
+  - CONTRIBUTING.md 贡献指南
+  - SECURITY.md 安全策略
+  - CHANGELOG.md 更新日志
+  - GitHub Issue 模板 (bug_report.md, feature_request.md)
+  - GitHub PR 模板 (PULL_REQUEST_TEMPLATE.md)
+  - CI 工作流 (ci.yml)
+  - Dependabot 配置 (dependabot.yml)
+  - CODEOWNERS 配置
+
+#### 技术架构
   - 设置服务 (SettingsService.ets)
   - 骑行偏好设置 (导航模式、单位制、语音等)
   - 动作检测设置 (自动启停、灵敏度、超时)
