@@ -60,3 +60,9 @@ Thumbs.db
 *.json
 !feature-list.json
 checkpoint.json
+res/
+demo_output.txt
+ini.txt
+fix_path.ps1
+install_claw.bat
+test_claw.bat

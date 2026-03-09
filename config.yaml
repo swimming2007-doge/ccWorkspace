@@ -35,11 +35,32 @@ arxiv:
   ssl_verify: true
 
 # -----------------------------------------------------------------------------
+# AI 内容生成配置
+# -----------------------------------------------------------------------------
+ai:
+  # AI 服务提供商: zhipu / openai / anthropic
+  provider: "zhipu"
+
+  # API 配置
+  # 可使用环境变量：${ZHIPU_API_KEY}
+  api_key: "${ZHIPU_API_KEY}"
+
+  # 模型选择
+  model: "glm-4-flash"
+
+  # 生成参数
+  temperature: 0.7
+  max_tokens: 4000
+
+  # 请求超时（秒）
+  timeout: 60
+
+# -----------------------------------------------------------------------------
 # 内容生成配置
 # -----------------------------------------------------------------------------
 content:
-  # 写作风格: professional / casual / academic
-  style: "professional"
+  # 写作风格: academic（学术风格，推荐）
+  style: "academic"
 
   # 语言
   language: "zh"
@@ -51,7 +72,7 @@ content:
   category: "AI/大模型"
 
   # 摘要配置
-  max_abstract_length: 300
+  max_abstract_length: 500
 
   # 是否包含 PDF 链接
   include_pdf_link: true
@@ -76,8 +97,8 @@ blog:
   # ========== 认证信息 ==========
   # OAuth2 访问令牌
   # 获取方式：https://developer.wordpress.com/docs/oauth2/
-  # 可使用环境变量：${WORDPRESS_ACCESS_TOKEN}
-  access_token: "NIn1IRDb#eBYwyaDU5e%6d(5Rr9iBqxtnJ8IlwRZk!s6u57OqHWmW6XQTpsN&EAu"
+  # 可使用环境变量：${WORDPRESS_ACCESS_TOKEN} NIn1IRDb#eBYwyaDU5e%6d(5Rr9iBqxtnJ8IlwRZk!s6u57OqHWmW6XQTpsN&EAu
+  access_token: ${WORDPRESS_ACCESS_TOKEN}
 
   # ========== 发布参数 ==========
   # 发布状态: publish（公开发布）, draft（草稿）, private（私有）

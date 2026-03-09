@@ -10,12 +10,16 @@ import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 from utils.config_loader import load_config, Config, get_config_dict
 from skills.arxiv_scraper import ArXivScraperSkill, ArXivPaper, ScraperResult
 from skills.content_generator import ContentGeneratorSkill, BlogContent, GeneratorResult
 from skills.blog_poster import BlogPosterSkill, MockBlogPosterSkill, PostResult
+
+# 本地保存目录
+LOCAL_SAVE_DIR = "res"
 
 
 class AgentState(Enum):
@@ -122,7 +126,13 @@ class ArXivBlogAgent:
 
         # 注册各 Skill
         self.skills["arxiv_scraper"] = ArXivScraperSkill(config_dict["arxiv"])
-        self.skills["content_generator"] = ContentGeneratorSkill(config_dict["content"])
+
+        # 内容生成器：传递 AI 配置
+        self.skills["content_generator"] = ContentGeneratorSkill(
+            config=config_dict["content"],
+            ai_config=config_dict.get("ai")
+        )
+
         self.skills["blog_poster"] = BlogPosterSkill(config_dict["blog"])
         self.skills["mock_blog_poster"] = MockBlogPosterSkill(config_dict["blog"])
 
@@ -159,7 +169,6 @@ class ArXivBlogAgent:
         result = self.skills["content_generator"].execute(
             papers=papers,
             style=self.config.content.style,
-            language=self.config.content.language,
             title_prefix=self.config.content.title_prefix,
         )
 
@@ -233,6 +242,9 @@ class ArXivBlogAgent:
                     duration=(self.status.end_time - self.status.start_time).total_seconds(),
                 )
 
+            # Stage 2.5: 保存博客到本地
+            self._save_blog_local(generate_result.blog_content, scrape_result.papers)
+
             # Stage 3: 发布
             post_result = self._step_post(generate_result.blog_content)
             if not post_result.success:
@@ -282,6 +294,72 @@ class ArXivBlogAgent:
     def get_config(self) -> Dict[str, Any]:
         """获取当前配置"""
         return get_config_dict(self.config)
+
+    def _save_blog_local(self, blog_content: BlogContent, papers: List[ArXivPaper]) -> str:
+        """
+        保存博客到本地 res 文件夹
+
+        Args:
+            blog_content: 博客内容
+            papers: 论文列表
+
+        Returns:
+            str: 保存的文件路径
+        """
+        # 创建 res 目录
+        project_root = Path(self.config_path).parent
+        res_dir = project_root / LOCAL_SAVE_DIR
+        res_dir.mkdir(parents=True, exist_ok=True)
+
+        # 生成文件名（使用日期时间）
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        date_str = now.strftime("%Y-%m-%d")
+
+        # 保存 Markdown 文件
+        md_filename = f"blog_{timestamp}.md"
+        md_path = res_dir / md_filename
+
+        with open(md_path, "w", encoding="utf-8") as f:
+            f.write(f"# {blog_content.title}\n\n")
+            f.write(f"> 生成时间: {blog_content.created_at}\n\n")
+            f.write(f"> 标签: {', '.join(blog_content.tags)}\n\n")
+            f.write(f"> 分类: {blog_content.category}\n\n")
+            f.write("---\n\n")
+            f.write(blog_content.content)
+
+        # 保存 JSON 文件（包含完整信息）
+        json_filename = f"blog_{timestamp}.json"
+        json_path = res_dir / json_filename
+
+        blog_data = {
+            "title": blog_content.title,
+            "summary": blog_content.summary,
+            "content": blog_content.content,
+            "tags": blog_content.tags,
+            "category": blog_content.category,
+            "created_at": blog_content.created_at,
+            "papers": [
+                {
+                    "title": p.title,
+                    "authors": p.authors,
+                    "arxiv_id": p.arxiv_id,
+                    "url": p.url,
+                    "pdf_url": p.pdf_url,
+                    "submitted_date": p.submitted_date,
+                    "categories": p.categories,
+                }
+                for p in papers
+            ]
+        }
+
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(blog_data, f, indent=2, ensure_ascii=False)
+
+        self.logger.info(f"Blog saved to: {md_path}")
+        self.logger.info(f"Blog data saved to: {json_path}")
+
+        return str(md_path)
 
     def close(self):
         """清理资源"""

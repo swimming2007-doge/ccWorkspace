@@ -29,6 +29,17 @@ class ArxivConfig:
 
 
 @dataclass
+class AIConfig:
+    """AI 内容生成配置"""
+    provider: str = ""
+    api_key: str = ""
+    model: str = ""
+    temperature: float = 0.7
+    max_tokens: int = 4000
+    timeout: int = 60
+
+
+@dataclass
 class ContentConfig:
     """内容生成配置"""
     style: str = ""
@@ -73,6 +84,7 @@ class AgentConfigData:
 class Config:
     """集中式配置"""
     arxiv: ArxivConfig = field(default_factory=ArxivConfig)
+    ai: AIConfig = field(default_factory=AIConfig)
     content: ContentConfig = field(default_factory=ContentConfig)
     blog: BlogConfig = field(default_factory=BlogConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
@@ -154,6 +166,18 @@ def load_config(config_path: str = "config.yaml") -> Config:
         ssl_verify=arxiv_data.get("ssl_verify", True),
     )
 
+    # 验证并加载 AI 配置（可选）
+    if "ai" in raw_config:
+        ai_data = raw_config["ai"]
+        config.ai = AIConfig(
+            provider=ai_data.get("provider", "zhipu"),
+            api_key=ai_data.get("api_key", ""),
+            model=ai_data.get("model", "glm-4-flash"),
+            temperature=ai_data.get("temperature", 0.7),
+            max_tokens=ai_data.get("max_tokens", 4000),
+            timeout=ai_data.get("timeout", 60),
+        )
+
     # 验证并加载 Content 配置
     if "content" not in raw_config:
         raise ValueError("配置文件缺少 'content' 配置节")
@@ -225,6 +249,7 @@ def get_config_dict(config: Config) -> Dict[str, Any]:
     from dataclasses import asdict
     return {
         "arxiv": asdict(config.arxiv),
+        "ai": asdict(config.ai),
         "content": asdict(config.content),
         "blog": asdict(config.blog),
         "logging": asdict(config.logging),
